@@ -1,1418 +1,1285 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HSK 1 Active Recall Flashcards</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: #f8fafc;
-      color: #0f172a;
-      -webkit-tap-highlight-color: transparent;
+    body { font-family: 'Inter', sans-serif; }
+    .perspective-1000 { perspective: 1000px; }
+    .transform-style-3d { transform-style: preserve-3d; }
+    .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+    .rotate-y-180 { transform: rotateY(180deg); }
+
+    body.theme-light {
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --border-color: #e2e8f0;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
     }
-    .hanzi-font {
-      font-family: 'Noto Sans SC', sans-serif;
+    body.theme-dark {
+      --bg-main: #090d16;
+      --bg-card: #131b2e;
+      --bg-subtle: #1e293b;
+      --border-color: #2a374a;
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
     }
-    .perspective-1000 {
-      perspective: 1200px;
-    }
-    .transform-style-3d {
-      transform-style: preserve-3d;
-      transition: transform 0.55s cubic-bezier(0.23, 1, 0.32, 1);
-    }
-    .backface-hidden {
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-    }
-    .rotate-y-180 {
-      transform: rotateY(180deg);
-    }
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    @keyframes pulseRing {
-      0% { transform: scale(0.95); opacity: 0.7; }
-      70% { transform: scale(1.25); opacity: 0; }
-      100% { transform: scale(1.25); opacity: 0; }
-    }
-    .audio-speaking::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 9999px;
-      border: 2px solid #dc2626;
-      animation: pulseRing 1.1s infinite;
-    }
+    .theme-main { background-color: var(--bg-main); color: var(--text-primary); }
+    .theme-card { background-color: var(--bg-card); border-color: var(--border-color); }
+    .theme-subtle { background-color: var(--bg-subtle); border-color: var(--border-color); }
+    .theme-text-sec { color: var(--text-secondary); }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-rose-100 selection:text-rose-900">
+<body class="theme-light theme-main h-full flex flex-col antialiased transition-colors duration-200">
 
-  <!-- Top Navigation & Stats Header -->
-  <header class="w-full max-w-4xl mx-auto px-4 pt-5 pb-3">
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold hanzi-font text-lg shadow-sm">
-          汉
-        </div>
-        <div>
-          <h1 class="text-lg font-bold tracking-tight text-slate-900 leading-tight">HSK 1 Active Recall</h1>
-          <p id="mode-subtitle" class="text-xs text-slate-500">150 Core Words • Hanzi Mode</p>
+  <!-- ==================== HOME / SETUP SCREEN ==================== -->
+  <div id="home-view" class="flex-1 flex flex-col items-center justify-start p-4 sm:p-8 overflow-y-auto">
+    <div class="w-full max-w-2xl theme-card border rounded-3xl shadow-xl p-6 sm:p-8 my-auto space-y-5">
+      <div class="text-center space-y-1.5">
+        <span class="inline-block px-3 py-1 rounded-full bg-rose-500/10 text-rose-500 text-xs font-bold uppercase tracking-wider">HSK 1 • 150 Words</span>
+        <h1 id="home-title" class="text-2xl sm:text-3xl font-extrabold tracking-tight">Mandarin Active Recall</h1>
+        <p id="home-subtitle" class="text-xs sm:text-sm theme-text-sec">Configure your language, theme, prompt mode, and shortcuts before starting.</p>
+      </div>
+
+      <!-- 1. Language Selector -->
+      <div class="theme-subtle border rounded-2xl p-4">
+        <label id="lbl-lang" class="block text-xs font-bold uppercase tracking-wider theme-text-sec mb-2.5">1. Translation Language</label>
+        <div class="grid grid-cols-2 gap-2.5">
+          <button id="home-lang-en" type="button" class="py-3 px-4 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-2">🇬🇧 English</button>
+          <button id="home-lang-fr" type="button" class="py-3 px-4 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-2">🇫🇷 Français</button>
         </div>
       </div>
 
-      <!-- Session Metrics -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <div class="bg-white border border-slate-200/80 rounded-xl px-3 py-1.5 shadow-xs flex items-center gap-2" title="Consecutive Mastered Streak">
-          <span class="text-amber-500 text-sm">🔥</span>
-          <div class="text-xs">
-            <span class="text-slate-400 font-medium">Streak</span>
-            <span id="streak-count" class="font-bold text-slate-800 ml-1">0</span>
+      <!-- 2. Theme Selector -->
+      <div class="theme-subtle border rounded-2xl p-4">
+        <label id="lbl-theme" class="block text-xs font-bold uppercase tracking-wider theme-text-sec mb-2.5">2. Visual Style</label>
+        <div class="grid grid-cols-2 gap-2.5">
+          <button id="home-theme-light" type="button" class="py-3 px-4 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-2">☀️ White (Light)</button>
+          <button id="home-theme-dark" type="button" class="py-3 px-4 rounded-xl text-xs font-bold border transition flex items-center justify-center gap-2">🌙 Dark</button>
+        </div>
+      </div>
+
+      <!-- 3. Study Mode Selector -->
+      <div class="theme-subtle border rounded-2xl p-4">
+        <label id="lbl-mode" class="block text-xs font-bold uppercase tracking-wider theme-text-sec mb-2.5">3. Card Front Prompt</label>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <button id="home-mode-hanzi" type="button" class="py-3 px-3 rounded-xl text-xs font-bold border transition text-center">🈴 Hanzi</button>
+          <button id="home-mode-pinyin" type="button" class="py-3 px-3 rounded-xl text-xs font-bold border transition text-center">🗣️ Pinyin</button>
+          <button id="home-mode-trans" type="button" class="py-3 px-3 rounded-xl text-xs font-bold border transition text-center">📖 English / Français</button>
+        </div>
+      </div>
+
+      <!-- 4. Import Kicked Words -->
+      <div class="theme-subtle border rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-2">
+          <label id="lbl-kicked" class="block text-xs font-bold uppercase tracking-wider theme-text-sec">4. Import Kicked Words (Optional)</label>
+          <div class="flex items-center gap-2">
+            <span id="home-kick-badge" class="px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-500 text-[11px] font-bold">0 kicked</span>
+            <button id="home-clear-kicked-btn" type="button" class="text-xs font-semibold text-rose-500 hover:underline">Clear</button>
           </div>
         </div>
-
-        <div class="bg-white border border-slate-200/80 rounded-xl px-3 py-1.5 shadow-xs flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <div class="text-xs">
-            <span class="text-slate-400 font-medium">Mastered</span>
-            <span id="mastered-count" class="font-bold text-slate-800 ml-1">0</span><span id="total-count" class="text-slate-400">/150</span>
-          </div>
-        </div>
-
-        <div id="kicked-badge" class="hidden bg-white border border-slate-200/80 rounded-xl px-3 py-1.5 shadow-xs flex items-center gap-1.5" title="Kicked from current study queue">
-          <span class="text-slate-400 text-xs">🚫</span>
-          <div class="text-xs">
-            <span class="text-slate-400 font-medium">Kicked</span>
-            <span id="kicked-count" class="font-bold text-slate-700 ml-0.5">0</span>
-          </div>
-        </div>
-
-        <button id="open-library-btn" type="button" class="px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 text-slate-700 hover:text-rose-600 hover:border-rose-200 transition shadow-xs flex items-center gap-1.5 text-xs font-semibold" title="Manage Word Library & Mastered Words">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-          <span>Word Library</span>
-        </button>
-
-        <button id="reset-session-btn" type="button" class="p-2 rounded-xl bg-white border border-slate-200/80 text-slate-600 hover:text-rose-600 hover:border-rose-200 transition shadow-xs" title="Shuffle Active Queue">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Progress Bar -->
-    <div class="w-full bg-slate-200/80 h-2 rounded-full overflow-hidden mb-4">
-      <div id="progress-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
-    </div>
-
-    <!-- Topic Filter Pills & Study Mode Switcher -->
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-      <div id="category-filters" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 flex-1">
-        <!-- Populated dynamically by JS -->
-      </div>
-
-      <div class="flex items-center gap-1 bg-slate-200/70 p-1 rounded-2xl shrink-0 self-start sm:self-auto">
-        <button id="mode-hanzi-btn" type="button" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-900 shadow-xs transition" title="Show Hanzi, guess Pinyin &amp; Meaning">
-          🈴 Hanzi Mode
-        </button>
-        <button id="mode-pinyin-btn" type="button" class="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 transition" title="Show Pinyin, guess Hanzi &amp; Meaning">
-          🔤 Pinyin Mode
-        </button>
-        <button id="mode-english-btn" type="button" class="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 transition" title="Show Meaning, guess Hanzi &amp; Pinyin">
-          🇬🇧 English Mode
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Flashcard Stage -->
-  <main class="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-4 py-2">
-    
-    <div id="queue-indicator" class="mb-3 flex items-center gap-2 text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-      <span id="queue-remaining-text">Remaining in queue: 150</span>
-      <span id="review-badge" class="hidden bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[11px] font-semibold">Reviewing Again</span>
-    </div>
-
-    <!-- 3D Card Container -->
-    <div id="card-wrapper" class="w-full perspective-1000 h-[370px] sm:h-[410px] cursor-pointer select-none">
-      <div id="flashcard-inner" class="relative w-full h-full transform-style-3d">
-        
-        <!-- FRONT OF CARD -->
-        <div class="absolute inset-0 backface-hidden bg-white rounded-3xl border border-slate-200/90 shadow-lg shadow-slate-200/50 flex flex-col items-center justify-center p-6">
-          <div class="flex-1 flex flex-col items-center justify-center w-full text-center">
-            <span id="front-prompt-tag" class="text-xs font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-3 py-1 rounded-full mb-3">
-              Guess Hanzi &amp; Meaning
-            </span>
-            <span id="front-display" class="hanzi-font text-6xl sm:text-7xl md:text-8xl font-bold text-slate-900 tracking-wide leading-tight">
-              你好
-            </span>
-          </div>
-          <p id="front-instruction" class="text-xs text-slate-400 font-medium tracking-wide">
-            Recall the prompt, then tap or press Space
-          </p>
-        </div>
-
-        <!-- BACK OF CARD -->
-        <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-3xl border border-slate-200/90 shadow-lg shadow-slate-200/50 flex flex-col justify-between p-6 sm:p-8 overflow-y-auto">
-          
-          <div class="flex items-center justify-between w-full">
-            <span id="back-category" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 bg-slate-100 px-2.5 py-1 rounded-lg">
-              Pronouns &amp; People
-            </span>
-            <button id="audio-btn" type="button" class="relative flex items-center gap-2 px-3.5 py-2 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-100 active:scale-95 transition font-medium text-xs border border-rose-200/70" title="Listen (Shortcut: A)">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-              </svg>
-              <span>Listen</span>
-            </button>
-          </div>
-
-          <div class="text-center my-3">
-            <div id="back-hanzi" class="hanzi-font text-4xl sm:text-5xl font-bold text-slate-900 mb-1.5">
-              你好
-            </div>
-            <div id="back-pinyin" class="text-xl sm:text-2xl font-semibold text-rose-600 tracking-wide mb-1">
-              nǐ hǎo
-            </div>
-            <div id="back-english" class="text-base sm:text-lg font-medium text-slate-700">
-              hello; hi
-            </div>
-          </div>
-
-          <div class="bg-slate-50 border border-slate-200/70 rounded-2xl p-4 text-left relative">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Example in Context</span>
-              <button id="example-audio-btn" type="button" class="text-slate-400 hover:text-rose-600 transition p-1 rounded-lg" title="Play Example Sentence">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
-            </div>
-            <p id="back-ex-zh" class="hanzi-font text-base sm:text-lg font-medium text-slate-900 leading-snug">
-              你好，很高兴认识你。
-            </p>
-            <p id="back-ex-py" class="text-xs sm:text-sm text-rose-600/90 mt-0.5">
-              Nǐ hǎo, hěn gāoxìng rènshi nǐ.
-            </p>
-            <p id="back-ex-en" class="text-xs sm:text-sm text-slate-500 mt-0.5">
-              Hello, nice to meet you.
-            </p>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- Session Complete Screen -->
-    <div id="complete-screen" class="hidden w-full bg-white rounded-3xl border border-slate-200 shadow-lg p-8 text-center">
-      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl">
-        🎉
-      </div>
-      <h2 class="text-2xl font-bold text-slate-900 mb-2">Deck Completed!</h2>
-      <p class="text-slate-500 text-sm max-w-md mx-auto mb-6">
-        Great job! You have mastered all <span id="completed-total" class="font-semibold text-slate-800">150</span> active words in this category. You can practice mastered words again or manage your kicked list in the Word Library.
-      </p>
-      <div class="flex flex-wrap items-center justify-center gap-3">
-        <button id="restart-completed-btn" type="button" class="px-6 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm shadow-sm transition active:scale-95">
-          Practice Mastered Again
-        </button>
-        <button id="complete-open-lib-btn" type="button" class="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-sm transition active:scale-95">
-          Open Word Library
-        </button>
-      </div>
-    </div>
-
-    <!-- Action Controls Below Card -->
-    <div id="controls-area" class="w-full mt-5">
-      <div id="reveal-controls" class="flex flex-col sm:flex-row items-center justify-center gap-2.5">
-        <button id="reveal-btn" type="button" class="w-full sm:w-72 py-3.5 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white font-semibold text-base shadow-md shadow-slate-900/10 transition flex items-center justify-center gap-2">
-          <span>Reveal Answer</span>
-          <kbd class="hidden sm:inline-block text-[11px] font-normal bg-slate-700 text-slate-200 px-2 py-0.5 rounded-md">Space</kbd>
-        </button>
-        <button id="kick-front-btn" type="button" class="w-full sm:w-auto py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-100 active:scale-[0.98] text-slate-500 hover:text-slate-800 border border-slate-200/90 font-medium text-sm transition flex items-center justify-center gap-1.5 shadow-xs" title="Remove from learning list for now (Shortcut: X)">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-          </svg>
-          <span>Kick</span>
-          <kbd class="hidden sm:inline-block text-[10px] font-normal bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">X</kbd>
-        </button>
-      </div>
-
-      <div id="rating-controls" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 max-w-xl mx-auto">
-        <button id="learning-btn" type="button" class="py-3.5 px-4 rounded-2xl bg-amber-50 hover:bg-amber-100 active:scale-[0.98] text-amber-900 border border-amber-200/90 font-semibold text-sm transition flex flex-col items-center justify-center shadow-xs">
-          <div class="flex items-center gap-1.5">
-            <span>Still Learning</span>
-            <kbd class="hidden sm:inline-block text-[11px] font-normal bg-amber-200/70 text-amber-900 px-1.5 py-0.5 rounded">1</kbd>
-          </div>
-          <span class="text-[11px] font-normal text-amber-700 mt-0.5">Review again soon</span>
-        </button>
-
-        <button id="mastered-btn" type="button" class="py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-semibold text-sm transition flex flex-col items-center justify-center shadow-md shadow-emerald-600/15">
-          <div class="flex items-center gap-1.5">
-            <span>Mastered</span>
-            <kbd class="hidden sm:inline-block text-[11px] font-normal bg-emerald-700 text-emerald-100 px-1.5 py-0.5 rounded">2</kbd>
-          </div>
-          <span class="text-[11px] font-normal text-emerald-100 mt-0.5">Complete for session</span>
-        </button>
-
-        <button id="kick-back-btn" type="button" class="py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-100 active:scale-[0.98] text-slate-600 hover:text-slate-900 border border-slate-200/90 font-semibold text-sm transition flex flex-col items-center justify-center shadow-xs">
-          <div class="flex items-center gap-1.5">
-            <span>Kick Card</span>
-            <kbd class="hidden sm:inline-block text-[11px] font-normal bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">X</kbd>
-          </div>
-          <span class="text-[11px] font-normal text-slate-400 mt-0.5">Skip for now</span>
-        </button>
-      </div>
-    </div>
-
-  </main>
-
-  <footer class="w-full max-w-4xl mx-auto px-4 py-4 text-center">
-    <div id="toast-msg" class="hidden inline-block mb-2 px-3 py-1 rounded-full bg-slate-800 text-white text-xs font-medium shadow-sm transition-opacity"></div>
-    <div class="hidden sm:flex items-center justify-center gap-5 text-xs text-slate-400">
-      <span><kbd class="font-sans bg-slate-200/70 text-slate-600 px-1.5 py-0.5 rounded">Space</kbd> Flip Card</span>
-      <span><kbd class="font-sans bg-slate-200/70 text-slate-600 px-1.5 py-0.5 rounded">A</kbd> Pronounce</span>
-      <span><kbd class="font-sans bg-slate-200/70 text-slate-600 px-1.5 py-0.5 rounded">1</kbd> Still Learning</span>
-      <span><kbd class="font-sans bg-slate-200/70 text-slate-600 px-1.5 py-0.5 rounded">2</kbd> Mastered</span>
-      <span><kbd class="font-sans bg-slate-200/70 text-slate-600 px-1.5 py-0.5 rounded">X</kbd> Kick Card</span>
-    </div>
-  </footer>
-
-  <!-- Word Library & Mastered Words Modal -->
-  <div id="library-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
-    <div class="bg-white w-full max-w-3xl max-h-[88vh] rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
-      
-      <div class="px-5 py-4 border-b border-slate-200/80 flex items-center justify-between gap-3">
-        <div>
-          <h2 class="text-lg font-bold text-slate-900">Word Library</h2>
-          <p class="text-xs text-slate-500">Kick words you already know or re-study mastered words</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button id="toggle-import-export-btn" type="button" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200/80 text-xs font-semibold transition flex items-center gap-1.5" title="Export or Import Kicked List Code">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
-            <span>Import / Export Kicked</span>
-          </button>
-          <button id="close-library-btn" type="button" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition" title="Close Library">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <textarea id="home-import-input" rows="2" placeholder='Paste JSON ["我", "你"], Hanzi 我 你, or IDs 1, 2...' class="flex-1 px-3 py-2 text-xs font-mono rounded-xl border theme-card focus:outline-none focus:border-rose-500"></textarea>
+          <button id="home-import-btn" type="button" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition shrink-0">Import</button>
         </div>
       </div>
 
-      <div id="import-export-panel" class="hidden px-5 py-3.5 bg-amber-50/70 border-b border-amber-200/80 space-y-3">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h3 class="text-xs font-bold text-slate-800">Backup or Transfer Kicked Words</h3>
-            <p class="text-[11px] text-slate-500">Copy the JSON text below or paste a saved JSON list to restore your kicked words.</p>
-          </div>
-          <button id="export-kicked-btn" type="button" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition shrink-0 shadow-xs">
-            Generate Kicked JSON
-          </button>
+      <!-- 5. Keyboard Shortcuts -->
+      <div class="theme-subtle border rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-2.5">
+          <span id="lbl-shortcuts" class="text-xs font-bold uppercase tracking-wider theme-text-sec">5. Keyboard Shortcuts (Click key to change)</span>
+          <button id="home-reset-shortcuts-btn" type="button" class="text-xs font-semibold px-2.5 py-1 rounded-xl border theme-card hover:text-rose-500 transition">Reset Defaults</button>
         </div>
-
-        <div id="export-code-box" class="hidden space-y-2">
-          <textarea id="export-code-output" rows="3" readonly class="w-full px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-xl text-slate-700 select-all focus:outline-none"></textarea>
-          <button id="copy-export-code-btn" type="button" class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shadow-xs">
-            Copy JSON to Clipboard
-          </button>
-        </div>
-
-        <div class="space-y-2 pt-1 border-t border-amber-200/60">
-          <label for="import-code-input" class="block text-[11px] font-semibold text-slate-700">Paste Kicked JSON or comma-separated characters below:</label>
-          <textarea id="import-code-input" rows="3" placeholder='Paste here (e.g., ["我", "你"] or 1, 2, 3)...' class="w-full px-3 py-2 text-xs font-mono bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-rose-400"></textarea>
-          <button id="import-kicked-btn" type="button" class="w-full py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition shadow-xs">
-            Import Kicked List
-          </button>
-        </div>
+        <div id="home-shortcuts-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
       </div>
 
-      <div class="px-5 pt-3 pb-3 bg-slate-50/70 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-1 bg-slate-200/70 p-1 rounded-xl self-start flex-wrap">
-          <button id="tab-all" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-900 shadow-xs transition">
-            All (<span id="lib-count-all">150</span>)
-          </button>
-          <button id="tab-active" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition">
-            Active (<span id="lib-count-active">150</span>)
-          </button>
-          <button id="tab-mastered" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition">
-            Mastered (<span id="lib-count-mastered">0</span>)
-          </button>
-          <button id="tab-kicked" type="button" class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition">
-            Kicked (<span id="lib-count-kicked">0</span>)
-          </button>
-        </div>
-
-        <div class="relative flex-1 sm:max-w-xs">
-          <input id="library-search" type="text" placeholder="Search Hanzi, Pinyin, English..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-rose-400" />
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-      </div>
-
-      <div id="library-bulk-bar" class="hidden px-5 py-2.5 bg-emerald-50/80 border-b border-emerald-200/60 flex items-center justify-between gap-2">
-        <span id="bulk-bar-text" class="text-xs font-medium text-emerald-900">Want to review all mastered words again?</span>
-        <button id="bulk-action-btn" type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shadow-xs">
-          Study All Mastered Again
+      <!-- Action Footer -->
+      <div class="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <button id="home-open-library-btn" type="button" class="py-3.5 px-4 rounded-2xl theme-subtle border font-bold text-xs transition flex items-center justify-center gap-2 hover:border-rose-500">
+          <span>📚</span> <span id="btn-home-lib">Word Library</span>
         </button>
-      </div>
-
-      <div id="library-list" class="flex-1 overflow-y-auto divide-y divide-slate-100 px-3 sm:px-5 py-2">
-        <!-- Populated dynamically -->
+        <button id="start-studying-btn" type="button" class="flex-1 py-3.5 px-6 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-lg shadow-rose-600/20 transition flex items-center justify-center gap-2">
+          <span id="btn-start-study">Start Studying</span> <span>→</span>
+        </button>
       </div>
     </div>
   </div>
 
+  <!-- ==================== STUDY SCREEN ==================== -->
+  <div id="study-view" class="hidden flex-1 flex flex-col max-w-4xl w-full mx-auto p-3 sm:p-6">
+    <!-- Top Header -->
+    <header class="w-full flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b" style="border-color: var(--border-color);">
+      <div class="flex items-center gap-1.5">
+        <button id="back-home-btn" type="button" class="px-3 py-2 rounded-xl theme-subtle border text-xs font-bold transition hover:border-rose-500">← <span id="nav-home-lbl">Home</span></button>
+        <button id="study-theme-btn" type="button" class="p-2 rounded-xl theme-subtle border text-xs transition hover:border-rose-500" title="Toggle Theme">🌙</button>
+        <button id="study-lang-btn" type="button" class="px-2.5 py-2 rounded-xl theme-subtle border text-xs font-bold transition hover:border-rose-500" title="Toggle Language">EN</button>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button id="open-library-btn" type="button" class="px-3 py-2 rounded-xl theme-subtle border text-xs font-bold transition hover:border-rose-500">📚 <span id="nav-lib-lbl">Library</span></button>
+        <button id="open-settings-btn" type="button" class="p-2 rounded-xl theme-subtle border text-xs transition hover:border-rose-500" title="Shortcuts">⚙️</button>
+        <button id="reset-deck-btn" type="button" class="px-3 py-2 rounded-xl theme-subtle border text-xs font-bold transition hover:border-rose-500" title="Shuffle & Restart">↻ <span id="nav-reset-lbl">Shuffle</span></button>
+      </div>
+    </header>
+
+    <!-- Category Pills -->
+    <div id="category-pills" class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2"></div>
+
+    <!-- Progress Bar & Counters -->
+    <div class="w-full max-w-xl mx-auto mb-4 space-y-1.5">
+      <div class="flex items-center justify-between text-xs font-semibold theme-text-sec">
+        <span id="stat-remaining">Remaining: 0</span>
+        <span id="stat-mastered" class="text-emerald-500">Mastered: 0</span>
+        <span id="stat-kicked" class="text-rose-500">Kicked: 0</span>
+      </div>
+      <div class="w-full h-2 rounded-full theme-subtle overflow-hidden border">
+        <div id="progress-bar-fill" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- Main Flashcard Area -->
+    <main class="flex-1 flex flex-col items-center justify-center my-auto">
+      <div id="flashcard-container" class="w-full max-w-xl h-80 sm:h-96 perspective-1000 cursor-pointer select-none">
+        <div id="flashcard-inner" class="relative w-full h-full duration-500 transform-style-3d shadow-xl rounded-3xl">
+          
+          <!-- CARD FRONT -->
+          <div class="absolute inset-0 w-full h-full theme-card border rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-between backface-hidden">
+            <div class="w-full flex items-center justify-between">
+              <span id="card-badge-front" class="text-xs font-bold theme-text-sec px-3 py-1 rounded-full theme-subtle border">#1</span>
+              <button id="kick-front-top-btn" type="button" class="px-3 py-1.5 rounded-xl theme-subtle border text-xs font-semibold hover:text-rose-500 hover:border-rose-500 transition">🚫 <span class="lbl-kick-short">Kick</span></button>
+            </div>
+            <div id="front-prompt-box" class="text-center my-auto px-2"></div>
+            <div class="w-full text-center">
+              <span id="front-hint-text" class="text-xs theme-text-sec">Tap card or press Space to reveal</span>
+            </div>
+          </div>
+
+          <!-- CARD BACK -->
+          <div class="absolute inset-0 w-full h-full theme-card border rounded-3xl p-5 sm:p-7 flex flex-col justify-between backface-hidden rotate-y-180 overflow-y-auto">
+            <div class="w-full flex items-center justify-between">
+              <span id="card-badge-back" class="text-xs font-bold theme-text-sec px-3 py-1 rounded-full theme-subtle border">Answer</span>
+              <div class="flex items-center gap-1.5">
+                <button id="audio-word-btn" type="button" class="px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 text-xs font-bold transition">🔊 <span id="lbl-listen-word">Word</span></button>
+                <button id="audio-ex-btn" type="button" class="px-3 py-1.5 rounded-xl theme-subtle border text-xs font-bold hover:border-rose-500 transition">🔊 <span id="lbl-listen-ex">Sentence</span></button>
+              </div>
+            </div>
+
+            <div class="space-y-3 my-auto text-center py-2">
+              <div>
+                <div id="back-hanzi" class="text-4xl sm:text-5xl font-extrabold tracking-wide"></div>
+                <div id="back-pinyin" class="text-xl sm:text-2xl font-bold text-rose-500 mt-1"></div>
+                <div id="back-translation" class="text-base sm:text-lg font-semibold mt-1"></div>
+              </div>
+              <div class="theme-subtle p-3.5 rounded-2xl border max-w-md mx-auto text-left space-y-1">
+                <div id="back-ex-hanzi" class="text-sm sm:text-base font-bold"></div>
+                <div id="back-ex-pinyin" class="text-xs text-rose-500 font-medium"></div>
+                <div id="back-ex-trans" class="text-xs theme-text-sec"></div>
+              </div>
+            </div>
+
+            <div class="w-full text-center">
+              <span id="back-hint-text" class="text-xs theme-text-sec">Choose how well you recalled this word</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Bottom Action Buttons -->
+      <div class="w-full max-w-xl mt-5">
+        <div id="front-controls" class="flex flex-col sm:flex-row items-center gap-2.5">
+          <button id="reveal-btn" type="button" class="w-full py-4 px-6 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm sm:text-base shadow-lg shadow-rose-600/20 transition">Reveal Answer [Space]</button>
+          <button id="kick-front-btn" type="button" class="w-full sm:w-auto py-4 px-5 rounded-2xl theme-card border font-bold text-sm hover:border-rose-500 hover:text-rose-500 transition shrink-0">🚫 Kick [X]</button>
+        </div>
+
+        <div id="back-controls" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <button id="learning-btn" type="button" class="py-3.5 px-4 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-bold text-xs sm:text-sm hover:bg-amber-500/25 transition">Still Learning [1]</button>
+          <button id="mastered-btn" type="button" class="py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md transition">Mastered [2]</button>
+          <button id="kick-back-btn" type="button" class="py-3.5 px-4 rounded-2xl theme-card border font-bold text-xs sm:text-sm hover:border-rose-500 hover:text-rose-500 transition">🚫 Kick [X]</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== SETTINGS MODAL ==================== -->
+  <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="theme-card w-full max-w-lg max-h-[90vh] rounded-3xl border shadow-2xl flex flex-col overflow-hidden">
+      <div class="px-6 py-4 border-b flex items-center justify-between" style="border-color: var(--border-color);">
+        <h2 id="modal-settings-title" class="text-base font-bold">Keyboard Shortcuts</h2>
+        <button id="close-settings-btn" type="button" class="p-2 rounded-xl theme-subtle border text-xs font-bold">✕</button>
+      </div>
+      <div class="p-6 overflow-y-auto space-y-4">
+        <p id="modal-settings-desc" class="text-xs theme-text-sec">Click any shortcut button below, then press the key you want to assign.</p>
+        <div id="settings-shortcuts-list" class="space-y-2.5"></div>
+      </div>
+      <div class="px-6 py-4 border-t flex items-center justify-between" style="border-color: var(--border-color);">
+        <button id="settings-reset-btn" type="button" class="px-4 py-2 rounded-xl theme-subtle border text-xs font-bold hover:text-rose-500">Reset Defaults</button>
+        <button id="settings-done-btn" type="button" class="px-5 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== WORD LIBRARY MODAL ==================== -->
+  <div id="library-modal" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="theme-card w-full max-w-3xl max-h-[92vh] rounded-3xl border shadow-2xl flex flex-col overflow-hidden">
+      <div class="px-6 py-4 border-b flex items-center justify-between" style="border-color: var(--border-color);">
+        <h2 id="modal-lib-title" class="text-base font-bold">HSK 1 Word Library (150 Words)</h2>
+        <button id="close-library-btn" type="button" class="p-2 rounded-xl theme-subtle border text-xs font-bold">✕</button>
+      </div>
+
+      <!-- Library Tabs & Search -->
+      <div class="px-6 py-3 theme-subtle border-b flex flex-col sm:flex-row items-center justify-between gap-3" style="border-color: var(--border-color);">
+        <div class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
+          <button data-tab="all" type="button" class="lib-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold border">All</button>
+          <button data-tab="active" type="button" class="lib-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold border">Active</button>
+          <button data-tab="mastered" type="button" class="lib-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold border">Mastered</button>
+          <button data-tab="kicked" type="button" class="lib-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold border">Kicked</button>
+          <button data-tab="io" type="button" class="lib-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold border">Import / Export</button>
+        </div>
+        <input id="lib-search-input" type="text" placeholder="Search Hanzi, Pinyin, meaning..." class="w-full sm:w-60 px-3 py-1.5 text-xs rounded-xl border theme-card focus:outline-none focus:border-rose-500">
+      </div>
+
+      <!-- Bulk Mastered Bar -->
+      <div id="lib-mastered-bar" class="hidden px-6 py-2.5 bg-emerald-500/10 border-b border-emerald-500/20 flex items-center justify-between text-xs">
+        <span id="lib-mastered-count" class="font-bold text-emerald-600 dark:text-emerald-400">Mastered: 0</span>
+        <button id="lib-study-all-mastered-btn" type="button" class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition">Study All Mastered Again ↺</button>
+      </div>
+
+      <!-- Library Content -->
+      <div id="lib-word-list" class="flex-1 p-5 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+
+      <!-- Import / Export Panel inside Library -->
+      <div id="lib-io-panel" class="hidden flex-1 p-6 overflow-y-auto space-y-5">
+        <div class="theme-subtle border rounded-2xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <h3 id="io-export-title" class="text-xs font-bold uppercase tracking-wider">Export Kicked Words</h3>
+            <button id="io-copy-btn" type="button" class="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition">Copy JSON</button>
+          </div>
+          <textarea id="io-export-box" rows="3" readonly class="w-full px-3 py-2 text-xs font-mono rounded-xl border theme-card focus:outline-none"></textarea>
+        </div>
+
+        <div class="theme-subtle border rounded-2xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <h3 id="io-import-title" class="text-xs font-bold uppercase tracking-wider">Import Kicked Words</h3>
+            <button id="io-apply-btn" type="button" class="px-3 py-1.5 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-700 transition">Apply Import</button>
+          </div>
+          <textarea id="io-import-box" rows="3" placeholder='Paste JSON array ["我", "你"], Hanzi, or IDs...' class="w-full px-3 py-2 text-xs font-mono rounded-xl border theme-card focus:outline-none focus:border-rose-500"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast-msg" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] px-4 py-2.5 rounded-full bg-slate-900 text-white text-xs font-bold shadow-xl border border-slate-700"></div>
+
   <script>
-    const HSK1_VOCABULARY = [
-      { id: 1, hanzi: "我", pinyin: "wǒ", english: "I; me", category: "Pronouns & People", exZh: "我是学生。", exPy: "Wǒ shì xuésheng.", exEn: "I am a student." },
-      { id: 2, hanzi: "我们", pinyin: "wǒmen", english: "we; us", category: "Pronouns & People", exZh: "我们都是中国人。", exPy: "Wǒmen dōu shì Zhōngguórén.", exEn: "We are all Chinese." },
-      { id: 3, hanzi: "你", pinyin: "nǐ", english: "you (singular)", category: "Pronouns & People", exZh: "你好吗？", exPy: "Nǐ hǎo ma?", exEn: "How are you?" },
-      { id: 4, hanzi: "他", pinyin: "tā", english: "he; him", category: "Pronouns & People", exZh: "他是我的老师。", exPy: "Tā shì wǒ de lǎoshī.", exEn: "He is my teacher." },
-      { id: 5, hanzi: "她", pinyin: "tā", english: "she; her", category: "Pronouns & People", exZh: "她很漂亮。", exPy: "Tā hěn piàoliang.", exEn: "She is very pretty." },
-      { id: 6, hanzi: "这", pinyin: "zhè", english: "this", category: "Pronouns & People", exZh: "这是什么？", exPy: "Zhè shì shénme?", exEn: "What is this?" },
-      { id: 7, hanzi: "那", pinyin: "nà", english: "that", category: "Pronouns & People", exZh: "那是我爸爸的书。", exPy: "Nà shì wǒ bàba de shū.", exEn: "That is my dad's book." },
-      { id: 8, hanzi: "哪", pinyin: "nǎ", english: "which", category: "Pronouns & People", exZh: "你是哪国人？", exPy: "Nǐ shì nǎ guó rén?", exEn: "Which country are you from?" },
-      { id: 9, hanzi: "哪儿", pinyin: "nǎr", english: "where", category: "Pronouns & People", exZh: "你去哪儿？", exPy: "Nǐ qù nǎr?", exEn: "Where are you going?" },
-      { id: 10, hanzi: "谁", pinyin: "shéi", english: "who; whom", category: "Pronouns & People", exZh: "他是谁？", exPy: "Tā shì shéi?", exEn: "Who is he?" },
-      { id: 11, hanzi: "什么", pinyin: "shénme", english: "what", category: "Pronouns & People", exZh: "你叫什么名字？", exPy: "Nǐ jiào shénme míngzi?", exEn: "What is your name?" },
-      { id: 12, hanzi: "多少", pinyin: "duōshao", english: "how many; how much", category: "Pronouns & People", exZh: "你们学校有多少学生？", exPy: "Nǐmen xuéxiào yǒu duōshao xuésheng?", exEn: "How many students are in your school?" },
-      { id: 13, hanzi: "几", pinyin: "jǐ", english: "how many; a few", category: "Pronouns & People", exZh: "你家有几口人？", exPy: "Nǐ jiā yǒu jǐ kǒu rén?", exEn: "How many people are in your family?" },
-      { id: 14, hanzi: "怎么", pinyin: "zěnme", english: "how", category: "Pronouns & People", exZh: "这个字怎么读？", exPy: "Zhège zì zěnme dú?", exEn: "How do you read this character?" },
-      { id: 15, hanzi: "怎么样", pinyin: "zěnmeyàng", english: "how about; how is it", category: "Pronouns & People", exZh: "今天天气怎么样？", exPy: "Jīntiān tiānqì zěnmeyàng?", exEn: "How is the weather today?" },
-      { id: 16, hanzi: "人", pinyin: "rén", english: "person; people", category: "Pronouns & People", exZh: "商店里有很多人。", exPy: "Shāngdiàn lǐ yǒu hěn duō rén.", exEn: "There are many people in the store." },
-      { id: 17, hanzi: "爸爸", pinyin: "bàba", english: "father; dad", category: "Pronouns & People", exZh: "我爸爸是医生。", exPy: "Wǒ bàba shì yīshēng.", exEn: "My father is a doctor." },
-      { id: 18, hanzi: "妈妈", pinyin: "māma", english: "mother; mom", category: "Pronouns & People", exZh: "我妈妈喜欢做饭。", exPy: "Wǒ māma xǐhuan zuòfàn.", exEn: "My mom likes cooking." },
-      { id: 19, hanzi: "儿子", pinyin: "érzi", english: "son", category: "Pronouns & People", exZh: "他儿子五岁了。", exPy: "Tā érzi wǔ suì le.", exEn: "His son is five years old." },
-      { id: 20, hanzi: "女儿", pinyin: "nǚ'ér", english: "daughter", category: "Pronouns & People", exZh: "我有一个女儿。", exPy: "Wǒ yǒu yí ge nǚ'ér.", exEn: "I have a daughter." },
-      { id: 21, hanzi: "老师", pinyin: "lǎoshī", english: "teacher", category: "Pronouns & People", exZh: "王老师教我们汉语。", exPy: "Wáng lǎoshī jiāo wǒmen Hànyǔ.", exEn: "Teacher Wang teaches us Chinese." },
-      { id: 22, hanzi: "学生", pinyin: "xuésheng", english: "student", category: "Pronouns & People", exZh: "我是大学学生。", exPy: "Wǒ shì dàxué xuésheng.", exEn: "I am a university student." },
-      { id: 23, hanzi: "同学", pinyin: "tóngxué", english: "classmate", category: "Pronouns & People", exZh: "他们都是我的同学。", exPy: "Tāmen dōu shì wǒ de tóngxué.", exEn: "They are all my classmates." },
-      { id: 24, hanzi: "朋友", pinyin: "péngyou", english: "friend", category: "Pronouns & People", exZh: "他是我的好朋友。", exPy: "Tā shì wǒ de hǎo péngyou.", exEn: "He is my good friend." },
-      { id: 25, hanzi: "医生", pinyin: "yīshēng", english: "doctor", category: "Pronouns & People", exZh: "李医生在医院工作。", exPy: "Lǐ yīshēng zài yīyuàn gōngzuò.", exEn: "Doctor Li works at the hospital." },
-      { id: 26, hanzi: "先生", pinyin: "xiānsheng", english: "Mr.; sir; husband", category: "Pronouns & People", exZh: "张先生不在家。", exPy: "Zhāng xiānsheng bú zài jiā.", exEn: "Mr. Zhang is not at home." },
-      { id: 27, hanzi: "小姐", pinyin: "xiǎojiě", english: "Miss; young lady", category: "Pronouns & People", exZh: "王小姐很漂亮。", exPy: "Wáng xiǎojiě hěn piàoliang.", exEn: "Miss Wang is very pretty." },
-
-      { id: 28, hanzi: "一", pinyin: "yī", english: "one", category: "Numbers & Time", exZh: "我有一个苹果。", exPy: "Wǒ yǒu yí ge píngguǒ.", exEn: "I have one apple." },
-      { id: 29, hanzi: "二", pinyin: "èr", english: "two", category: "Numbers & Time", exZh: "现在十二点了。", exPy: "Xiànzài shí'èr diǎn le.", exEn: "It is twelve o'clock now." },
-      { id: 30, hanzi: "三", pinyin: "sān", english: "three", category: "Numbers & Time", exZh: "我有三本书。", exPy: "Wǒ yǒu sān běn shū.", exEn: "I have three books." },
-      { id: 31, hanzi: "四", pinyin: "sì", english: "four", category: "Numbers & Time", exZh: "一年有四个季节。", exPy: "Yì nián yǒu sì ge jìjié.", exEn: "There are four seasons in a year." },
-      { id: 32, hanzi: "五", pinyin: "wǔ", english: "five", category: "Numbers & Time", exZh: "今天星期五。", exPy: "Jīntiān xīngqīwǔ.", exEn: "Today is Friday." },
-      { id: 33, hanzi: "六", pinyin: "liù", english: "six", category: "Numbers & Time", exZh: "桌子上有六个杯子。", exPy: "Zhuōzi shàng yǒu liù ge bēizi.", exEn: "There are six cups on the table." },
-      { id: 34, hanzi: "七", pinyin: "qī", english: "seven", category: "Numbers & Time", exZh: "一个星期有七天。", exPy: "Yí ge xīngqī yǒu qī tiān.", exEn: "A week has seven days." },
-      { id: 35, hanzi: "八", pinyin: "bā", english: "eight", category: "Numbers & Time", exZh: "我八点去学校。", exPy: "Wǒ bā diǎn qù xuéxiào.", exEn: "I go to school at eight o'clock." },
-      { id: 36, hanzi: "九", pinyin: "jiǔ", english: "nine", category: "Numbers & Time", exZh: "现在九点半。", exPy: "Xiànzài jiǔ diǎn bàn.", exEn: "It is nine thirty now." },
-      { id: 37, hanzi: "十", pinyin: "shí", english: "ten", category: "Numbers & Time", exZh: "这件衣服十块钱。", exPy: "Zhè jiàn yīfu shí kuài qián.", exEn: "This piece of clothing costs ten yuan." },
-      { id: 38, hanzi: "零", pinyin: "líng", english: "zero", category: "Numbers & Time", exZh: "今年是二零二六年。", exPy: "Jīnnián shì èr líng èr liù nián.", exEn: "This year is 2026." },
-      { id: 39, hanzi: "现在", pinyin: "xiànzài", english: "now", category: "Numbers & Time", exZh: "现在几点了？", exPy: "Xiànzài jǐ diǎn le?", exEn: "What time is it now?" },
-      { id: 40, hanzi: "今天", pinyin: "jīntiān", english: "today", category: "Numbers & Time", exZh: "今天是我的生日。", exPy: "Jīntiān shì wǒ de shēngrì.", exEn: "Today is my birthday." },
-      { id: 41, hanzi: "明天", pinyin: "míngtiān", english: "tomorrow", category: "Numbers & Time", exZh: "明天我去北京。", exPy: "Míngtiān wǒ qù Běijīng.", exEn: "Tomorrow I am going to Beijing." },
-      { id: 42, hanzi: "昨天", pinyin: "zuótiān", english: "yesterday", category: "Numbers & Time", exZh: "昨天下雨了。", exPy: "Zuótiān xiàyǔ le.", exEn: "It rained yesterday." },
-      { id: 43, hanzi: "上午", pinyin: "shàngwǔ", english: "morning (before noon)", category: "Numbers & Time", exZh: "上午我在家看书。", exPy: "Shàngwǔ wǒ zài jiā kànshū.", exEn: "In the morning I read books at home." },
-      { id: 44, hanzi: "中午", pinyin: "zhōngwǔ", english: "noon", category: "Numbers & Time", exZh: "中午我们去吃饭吧。", exPy: "Zhōngwǔ wǒmen qù chīfàn ba.", exEn: "Let's go eat at noon." },
-      { id: 45, hanzi: "下午", pinyin: "xiàwǔ", english: "afternoon", category: "Numbers & Time", exZh: "下午我有汉语课。", exPy: "Xiàwǔ wǒ yǒu Hànyǔ kè.", exEn: "In the afternoon I have Chinese class." },
-      { id: 46, hanzi: "年", pinyin: "nián", english: "year", category: "Numbers & Time", exZh: "我在中国住了三年。", exPy: "Wǒ zài Zhōngguó zhù le sān nián.", exEn: "I lived in China for three years." },
-      { id: 47, hanzi: "月", pinyin: "yuè", english: "month", category: "Numbers & Time", exZh: "今天是五月一号。", exPy: "Jīntiān shì wǔ yuè yī hào.", exEn: "Today is May 1st." },
-      { id: 48, hanzi: "日", pinyin: "rì", english: "day; date (written)", category: "Numbers & Time", exZh: "今天是十月十日。", exPy: "Jīntiān shì shí yuè shí rì.", exEn: "Today is October 10th." },
-      { id: 49, hanzi: "星期", pinyin: "xīngqī", english: "week", category: "Numbers & Time", exZh: "今天星期几？", exPy: "Jīntiān xīngqī jǐ?", exEn: "What day of the week is it today?" },
-      { id: 50, hanzi: "点", pinyin: "diǎn", english: "o'clock; dot", category: "Numbers & Time", exZh: "现在下午三点。", exPy: "Xiànzài xiàwǔ sān diǎn.", exEn: "It is 3:00 PM now." },
-      { id: 51, hanzi: "分钟", pinyin: "fēnzhōng", english: "minute", category: "Numbers & Time", exZh: "请等我十分钟。", exPy: "Qǐng děng wǒ shí fēnzhōng.", exEn: "Please wait for me for ten minutes." },
-      { id: 52, hanzi: "时候", pinyin: "shíhou", english: "time; moment", category: "Numbers & Time", exZh: "你什么时候回家？", exPy: "Nǐ shénme shíhou huí jiā?", exEn: "When are you going home?" },
-      { id: 53, hanzi: "岁", pinyin: "suì", english: "years old", category: "Numbers & Time", exZh: "你今年多大了？我二十岁。", exPy: "Nǐ jīnnián duō dà le? Wǒ èrshí suì.", exEn: "How old are you this year? I am twenty." },
-      { id: 54, hanzi: "个", pinyin: "gè", english: "general measure word", category: "Numbers & Time", exZh: "我有一个哥哥。", exPy: "Wǒ yǒu yí ge gēge.", exEn: "I have an older brother." },
-      { id: 55, hanzi: "本", pinyin: "běn", english: "measure word for books", category: "Numbers & Time", exZh: "我想买两本书。", exPy: "Wǒ xiǎng mǎi liǎng běn shū.", exEn: "I want to buy two books." },
-      { id: 56, hanzi: "些", pinyin: "xiē", english: "some; a few", category: "Numbers & Time", exZh: "这些水果很新鲜。", exPy: "Zhèxiē shuǐguǒ hěn xīnxiān.", exEn: "These fruits are very fresh." },
-      { id: 57, hanzi: "块", pinyin: "kuài", english: "piece; unit of money (yuan)", category: "Numbers & Time", exZh: "这个杯子二十块钱。", exPy: "Zhège bēizi èrshí kuài qián.", exEn: "This cup costs twenty yuan." },
-
-      { id: 58, hanzi: "是", pinyin: "shì", english: "to be (am, is, are)", category: "Verbs", exZh: "他是美国人。", exPy: "Tā shì Měiguórén.", exEn: "He is American." },
-      { id: 59, hanzi: "有", pinyin: "yǒu", english: "to have; there is/are", category: "Verbs", exZh: "我有一只小猫。", exPy: "Wǒ yǒu yì zhī xiǎo māo.", exEn: "I have a kitten." },
-      { id: 60, hanzi: "看", pinyin: "kàn", english: "to look; to watch; to read", category: "Verbs", exZh: "我喜欢看电影。", exPy: "Wǒ xǐhuan kàn diànyǐng.", exEn: "I like watching movies." },
-      { id: 61, hanzi: "听", pinyin: "tīng", english: "to listen; to hear", category: "Verbs", exZh: "请听我说。", exPy: "Qǐng tīng wǒ shuō.", exEn: "Please listen to me." },
-      { id: 62, hanzi: "说话", pinyin: "shuōhuà", english: "to speak; to talk", category: "Verbs", exZh: "他在和朋友说话。", exPy: "Tā zài hé péngyou shuōhuà.", exEn: "He is talking with a friend." },
-      { id: 63, hanzi: "读", pinyin: "dú", english: "to read aloud; to study", category: "Verbs", exZh: "请跟我读。", exPy: "Qǐng gēn wǒ dú.", exEn: "Please read after me." },
-      { id: 64, hanzi: "写", pinyin: "xiě", english: "to write", category: "Verbs", exZh: "我会写汉字。", exPy: "Wǒ huì xiě Hànzì.", exEn: "I can write Chinese characters." },
-      { id: 65, hanzi: "看见", pinyin: "kànjiàn", english: "to see", category: "Verbs", exZh: "我看见他了。", exPy: "Wǒ kànjiàn tā le.", exEn: "I saw him." },
-      { id: 66, hanzi: "叫", pinyin: "jiào", english: "to call; to be named", category: "Verbs", exZh: "我叫大卫。", exPy: "Wǒ jiào Dàwèi.", exEn: "My name is David." },
-      { id: 67, hanzi: "来", pinyin: "lái", english: "to come", category: "Verbs", exZh: "欢迎你来我家。", exPy: "Huānyíng nǐ lái wǒ jiā.", exEn: "Welcome to my home." },
-      { id: 68, hanzi: "回", pinyin: "huí", english: "to return; to go back", category: "Verbs", exZh: "我五点回家。", exPy: "Wǒ wǔ diǎn huí jiā.", exEn: "I go home at five o'clock." },
-      { id: 69, hanzi: "去", pinyin: "qù", english: "to go", category: "Verbs", exZh: "我想去中国。", exPy: "Wǒ xiǎng qù Zhōngguó.", exEn: "I want to go to China." },
-      { id: 70, hanzi: "吃", pinyin: "chī", english: "to eat", category: "Verbs", exZh: "你喜欢吃中国菜吗？", exPy: "Nǐ xǐhuan chī Zhōngguócài ma?", exEn: "Do you like eating Chinese food?" },
-      { id: 71, hanzi: "喝", pinyin: "hē", english: "to drink", category: "Verbs", exZh: "我想喝茶。", exPy: "Wǒ xiǎng hē chá.", exEn: "I want to drink tea." },
-      { id: 72, hanzi: "睡觉", pinyin: "shuìjiào", english: "to sleep", category: "Verbs", exZh: "他每天十一点睡觉。", exPy: "Tā měitiān shíyī diǎn shuìjiào.", exEn: "He goes to sleep at 11 o'clock every day." },
-      { id: 73, hanzi: "打电话", pinyin: "dǎ diànhuà", english: "to make a phone call", category: "Verbs", exZh: "妈妈在打电话。", exPy: "Māma zài dǎ diànhuà.", exEn: "Mom is making a phone call." },
-      { id: 74, hanzi: "做", pinyin: "zuò", english: "to do; to make", category: "Verbs", exZh: "你在做什么？", exPy: "Nǐ zài zuò shénme?", exEn: "What are you doing?" },
-      { id: 75, hanzi: "买", pinyin: "mǎi", english: "to buy", category: "Verbs", exZh: "我去商店买东西。", exPy: "Wǒ qù shāngdiàn mǎi dōngxi.", exEn: "I'm going to the shop to buy things." },
-      { id: 76, hanzi: "开", pinyin: "kāi", english: "to open; to drive", category: "Verbs", exZh: "请开门。", exPy: "Qǐng kāi mén.", exEn: "Please open the door." },
-      { id: 77, hanzi: "坐", pinyin: "zuò", english: "to sit; to travel by", category: "Verbs", exZh: "请坐！", exPy: "Qǐng zuò!", exEn: "Please sit down!" },
-      { id: 78, hanzi: "住", pinyin: "zhù", english: "to live; to stay", category: "Verbs", exZh: "你住在哪儿？", exPy: "Nǐ zhù zài nǎr?", exEn: "Where do you live?" },
-      { id: 79, hanzi: "学习", pinyin: "xuéxí", english: "to study; to learn", category: "Verbs", exZh: "我喜欢学习汉语。", exPy: "Wǒ xǐhuan xuéxí Hànyǔ.", exEn: "I like studying Chinese." },
-      { id: 80, hanzi: "工作", pinyin: "gōngzuò", english: "to work; job", category: "Verbs", exZh: "我在医院工作。", exPy: "Wǒ zài yīyuàn gōngzuò.", exEn: "I work at a hospital." },
-      { id: 81, hanzi: "下雨", pinyin: "xiàyǔ", english: "to rain", category: "Verbs", exZh: "外面下雨了。", exPy: "Wàimiàn xiàyǔ le.", exEn: "It's raining outside." },
-      { id: 82, hanzi: "爱", pinyin: "ài", english: "to love", category: "Verbs", exZh: "我爱 我的家人。", exPy: "Wǒ ài wǒ de jiārén.", exEn: "I love my family." },
-      { id: 83, hanzi: "喜欢", pinyin: "xǐhuan", english: "to like", category: "Verbs", exZh: "我喜欢喝咖啡。", exPy: "Wǒ xǐhuan hē kāfēi.", exEn: "I like drinking coffee." },
-      { id: 84, hanzi: "想", pinyin: "xiǎng", english: "to want; to think; to miss", category: "Verbs", exZh: "我想回家。", exPy: "Wǒ xiǎng huí jiā.", exEn: "I want to go home." },
-      { id: 85, hanzi: "认识", pinyin: "rènshi", english: "to know; to recognize", category: "Verbs", exZh: "认识你很高兴。", exPy: "Rènshi nǐ hěn gāoxìng.", exEn: "Nice to meet you." },
-      { id: 86, hanzi: "会", pinyin: "huì", english: "can; to know how to", category: "Verbs", exZh: "我会说一点儿汉语。", exPy: "Wǒ huì shuō yìdiǎnr Hànyǔ.", exEn: "I can speak a little Chinese." },
-      { id: 87, hanzi: "能", pinyin: "néng", english: "can; to be able to", category: "Verbs", exZh: "你能帮我吗？", exPy: "Nǐ néng bāng wǒ ma?", exEn: "Can you help me?" },
-      { id: 88, hanzi: "请", pinyin: "qǐng", english: "please; to invite", category: "Verbs", exZh: "请喝茶。", exPy: "Qǐng hē chá.", exEn: "Please have some tea." },
-      { id: 89, hanzi: "谢谢", pinyin: "xièxie", english: "thank you", category: "Verbs", exZh: "谢谢你的帮助！", exPy: "Xièxie nǐ de bāngzhù!", exEn: "Thank you for your help!" },
-      { id: 90, hanzi: "不客气", pinyin: "bú kèqi", english: "you're welcome", category: "Verbs", exZh: "不客气，这是我应该做的。", exPy: "Bú kèqi, zhè shì wǒ yīnggāi zuò de.", exEn: "You're welcome, it's what I should do." },
-      { id: 91, hanzi: "对不起", pinyin: "duìbuqǐ", english: "sorry", category: "Verbs", exZh: "对不起，我来晚了。", exPy: "Duìbuqǐ, wǒ lái wǎn le.", exEn: "Sorry, I am late." },
-      { id: 92, hanzi: "没关系", pinyin: "méi guānxi", english: "it doesn't matter; never mind", category: "Verbs", exZh: "没关系，别担心。", exPy: "Méi guānxi, bié dānxīn.", exEn: "It's okay, don't worry." },
-      { id: 93, hanzi: "再见", pinyin: "zàijiàn", english: "goodbye", category: "Verbs", exZh: "老师，再见！", exPy: "Lǎoshī, zàijiàn!", exEn: "Goodbye, teacher!" },
-      { id: 94, hanzi: "喂", pinyin: "wèi", english: "hello (on the phone)", category: "Verbs", exZh: "喂，你好，请问李先生在吗？", exPy: "Wèi, nǐ hǎo, qǐngwèn Lǐ xiānsheng zài ma?", exEn: "Hello, may I ask if Mr. Li is there?" },
-      { id: 95, hanzi: "在", pinyin: "zài", english: "to be at/in; (in progress)", category: "Verbs", exZh: "我在学校。", exPy: "Wǒ zài xuéxiào.", exEn: "I am at school." },
-
-      { id: 96, hanzi: "家", pinyin: "jiā", english: "home; family", category: "Nouns & Places", exZh: "我爱我家。", exPy: "Wǒ ài wǒ jiā.", exEn: "I love my home." },
-      { id: 97, hanzi: "学校", pinyin: "xuéxiào", english: "school", category: "Nouns & Places", exZh: "我们学校很大。", exPy: "Wǒmen xuéxiào hěn dà.", exEn: "Our school is very big." },
-      { id: 98, hanzi: "饭店", pinyin: "fàndiàn", english: "restaurant; hotel", category: "Nouns & Places", exZh: "这家饭店的菜很好吃。", exPy: "Zhè jiā fàndiàn de cài hěn hǎochī.", exEn: "The food at this restaurant is delicious." },
-      { id: 99, hanzi: "商店", pinyin: "shāngdiàn", english: "shop; store", category: "Nouns & Places", exZh: "他在商店工作。", exPy: "Tā zài shāngdiàn gōngzuò.", exEn: "He works at a shop." },
-      { id: 100, hanzi: "医院", pinyin: "yīyuàn", english: "hospital", category: "Nouns & Places", exZh: "他生病了，去医院了。", exPy: "Tā shēngbìng le, qù yīyuàn le.", exEn: "He got sick and went to the hospital." },
-      { id: 101, hanzi: "火车站", pinyin: "huǒchēzhàn", english: "train station", category: "Nouns & Places", exZh: "火车站离这儿不远。", exPy: "Huǒchēzhàn lí zhèr bù yuǎn.", exEn: "The train station is not far from here." },
-      { id: 102, hanzi: "中国", pinyin: "Zhōngguó", english: "China", category: "Nouns & Places", exZh: "中国很大，也很美。", exPy: "Zhōngguó hěn dà, yě hěn měi.", exEn: "China is very big and also very beautiful." },
-      { id: 103, hanzi: "北京", pinyin: "Běijīng", english: "Beijing", category: "Nouns & Places", exZh: "北京是中国的首都。", exPy: "Běijīng shì Zhōngguó de shǒudū.", exEn: "Beijing is the capital of China." },
-      { id: 104, hanzi: "上", pinyin: "shàng", english: "up; above; on", category: "Nouns & Places", exZh: "书在桌子上。", exPy: "Shū zài zhuōzi shàng.", exEn: "The book is on the table." },
-      { id: 105, hanzi: "下", pinyin: "xià", english: "down; below; under", category: "Nouns & Places", exZh: "小狗在桌子下面。", exPy: "Xiǎo gǒu zài zhuōzi xiàmiàn.", exEn: "The puppy is under the table." },
-      { id: 106, hanzi: "前面", pinyin: "qiánmiàn", english: "front; in front of", category: "Nouns & Places", exZh: "学校前面有一个公园。", exPy: "Xuéxiào qiánmiàn yǒu yí ge gōngyuán.", exEn: "There is a park in front of the school." },
-      { id: 107, hanzi: "后面", pinyin: "hòumiàn", english: "back; behind", category: "Nouns & Places", exZh: "他在我后面。", exPy: "Tā zài wǒ hòumiàn.", exEn: "He is behind me." },
-      { id: 108, hanzi: "里", pinyin: "lǐ", english: "inside; in", category: "Nouns & Places", exZh: "他们在房间里。", exPy: "Tāmen zài fángjiān lǐ.", exEn: "They are inside the room." },
-      { id: 109, hanzi: "名字", pinyin: "míngzi", english: "name", category: "Nouns & Places", exZh: "你的名字很好听。", exPy: "Nǐ de míngzi hěn hǎotīng.", exEn: "Your name sounds very nice." },
-      { id: 110, hanzi: "汉语", pinyin: "Hànyǔ", english: "Chinese language", category: "Nouns & Places", exZh: "汉语很有意思。", exPy: "Hànyǔ hěn yǒuyìsi.", exEn: "Chinese is very interesting." },
-      { id: 111, hanzi: "字", pinyin: "zì", english: "character; word", category: "Nouns & Places", exZh: "这个汉字很难写。", exPy: "Zhège Hànzì hěn nán xiě.", exEn: "This Chinese character is hard to write." },
-      { id: 112, hanzi: "桌子", pinyin: "zhuōzi", english: "table; desk", category: "Nouns & Places", exZh: "桌子上有一个电脑。", exPy: "Zhuōzi shàng yǒu yí ge diànnǎo.", exEn: "There is a computer on the desk." },
-      { id: 113, hanzi: "椅子", pinyin: "yǐzi", english: "chair", category: "Nouns & Places", exZh: "请坐在椅子上。", exPy: "Qǐng zuò zài yǐzi shàng.", exEn: "Please sit on the chair." },
-      { id: 114, hanzi: "电视", pinyin: "diànshì", english: "television; TV", category: "Nouns & Places", exZh: "爸爸在看电视。", exPy: "Bàba zài kàn diànshì.", exEn: "Dad is watching TV." },
-      { id: 115, hanzi: "电脑", pinyin: "diànnǎo", english: "computer", category: "Nouns & Places", exZh: "我用电脑工作。", exPy: "Wǒ yòng diànnǎo gōngzuò.", exEn: "I use a computer to work." },
-      { id: 116, hanzi: "电影", pinyin: "diànyǐng", english: "movie; film", category: "Nouns & Places", exZh: "这个电影很好看。", exPy: "Zhège diànyǐng hěn hǎokàn.", exEn: "This movie is very good." },
-      { id: 117, hanzi: "飞机", pinyin: "fēijī", english: "airplane", category: "Nouns & Places", exZh: "我坐飞机去上海。", exPy: "Wǒ zuò fēijī qù Shànghǎi.", exEn: "I am taking a plane to Shanghai." },
-      { id: 118, hanzi: "出租车", pinyin: "chūzūchē", english: "taxi", category: "Nouns & Places", exZh: "我们坐出租车去吧。", exPy: "Wǒmen zuò chūzūchē qù ba.", exEn: "Let's go by taxi." },
-      { id: 119, hanzi: "书", pinyin: "shū", english: "book", category: "Nouns & Places", exZh: "我喜欢看书。", exPy: "Wǒ xǐhuan kànshū.", exEn: "I like reading books." },
-      { id: 120, hanzi: "水", pinyin: "shuǐ", english: "water", category: "Nouns & Places", exZh: "请给我一杯水。", exPy: "Qǐng gěi wǒ yì bēi shuǐ.", exEn: "Please give me a glass of water." },
-      { id: 121, hanzi: "水果", pinyin: "shuǐguǒ", english: "fruit", category: "Nouns & Places", exZh: "多吃水果对身体好。", exPy: "Duō chī shuǐguǒ duì shēntǐ hǎo.", exEn: "Eating more fruit is good for your health." },
-      { id: 122, hanzi: "苹果", pinyin: "píngguǒ", english: "apple", category: "Nouns & Places", exZh: "这个苹果很甜。", exPy: "Zhège píngguǒ hěn tián.", exEn: "This apple is very sweet." },
-      { id: 123, hanzi: "茶", pinyin: "chá", english: "tea", category: "Nouns & Places", exZh: "中国人喜欢喝茶。", exPy: "Zhōngguórén xǐhuan hē chá.", exEn: "Chinese people like drinking tea." },
-      { id: 124, hanzi: "杯子", pinyin: "bēizi", english: "cup; glass", category: "Nouns & Places", exZh: "这是我的杯子。", exPy: "Zhè shì wǒ de bēizi.", exEn: "This is my cup." },
-      { id: 125, hanzi: "米饭", pinyin: "mǐfàn", english: "cooked rice", category: "Nouns & Places", exZh: "我中午吃米饭。", exPy: "Wǒ zhōngwǔ chī mǐfàn.", exEn: "I eat rice at noon." },
-      { id: 126, hanzi: "菜", pinyin: "cài", english: "dish; cuisine; vegetable", category: "Nouns & Places", exZh: "妈妈做的菜很好吃。", exPy: "Māma zuò de cài hěn hǎochī.", exEn: "The dishes mom makes are delicious." },
-      { id: 127, hanzi: "衣服", pinyin: "yīfu", english: "clothes", category: "Nouns & Places", exZh: "这件衣服很漂亮。", exPy: "Zhè jiàn yīfu hěn piàoliang.", exEn: "This piece of clothing is very pretty." },
-      { id: 128, hanzi: "钱", pinyin: "qián", english: "money", category: "Nouns & Places", exZh: "这个多少钱？", exPy: "Zhège duōshao qián?", exEn: "How much money is this?" },
-      { id: 129, hanzi: "东西", pinyin: "dōngxi", english: "thing; stuff", category: "Nouns & Places", exZh: "她买了很多东西。", exPy: "Tā mǎi le hěn duō dōngxi.", exEn: "She bought a lot of things." },
-      { id: 130, hanzi: "天气", pinyin: "tiānqì", english: "weather", category: "Nouns & Places", exZh: "今天天气很好。", exPy: "Jīntiān tiānqì hěn hǎo.", exEn: "The weather is very good today." },
-      { id: 131, hanzi: "猫", pinyin: "māo", english: "cat", category: "Nouns & Places", exZh: "这只猫很可爱。", exPy: "Zhè zhī māo hěn kě'ài.", exEn: "This cat is very cute." },
-      { id: 132, hanzi: "狗", pinyin: "gǒu", english: "dog", category: "Nouns & Places", exZh: "他家有一条大狗。", exPy: "Tā jiā yǒu yì tiáo dà gǒu.", exEn: "His family has a big dog." },
-
-      { id: 133, hanzi: "好", pinyin: "hǎo", english: "good; well; fine", category: "Adjectives & Particles", exZh: "你的汉语很好。", exPy: "Nǐ de Hànyǔ hěn hǎo.", exEn: "Your Chinese is very good." },
-      { id: 134, hanzi: "大", pinyin: "dà", english: "big; large", category: "Adjectives & Particles", exZh: "这个苹果很大。", exPy: "Zhège píngguǒ hěn dà.", exEn: "This apple is very big." },
-      { id: 135, hanzi: "小", pinyin: "xiǎo", english: "small; little", category: "Adjectives & Particles", exZh: "这只小猫很可爱。", exPy: "Zhè zhī xiǎo māo hěn kě'ài.", exEn: "This little cat is very cute." },
-      { id: 136, hanzi: "多", pinyin: "duō", english: "many; much", category: "Adjectives & Particles", exZh: "这里的人真多！", exPy: "Zhèlǐ de rén zhēn duō!", exEn: "There are so many people here!" },
-      { id: 137, hanzi: "少", pinyin: "shǎo", english: "few; little", category: "Adjectives & Particles", exZh: "今天学生很少。", exPy: "Jīntiān xuésheng hěn shǎo.", exEn: "There are very few students today." },
-      { id: 138, hanzi: "冷", pinyin: "lěng", english: "cold", category: "Adjectives & Particles", exZh: "今天有点儿冷。", exPy: "Jīntiān yǒudiǎnr lěng.", exEn: "It is a bit cold today." },
-      { id: 139, hanzi: "热", pinyin: "rè", english: "hot", category: "Adjectives & Particles", exZh: "夏天很热。", exPy: "Xiàtiān hěn rè.", exEn: "Summer is very hot." },
-      { id: 140, hanzi: "高兴", pinyin: "gāoxìng", english: "happy; glad", category: "Adjectives & Particles", exZh: "认识你我很高兴。", exPy: "Rènshi nǐ wǒ hěn gāoxìng.", exEn: "I am very glad to meet you." },
-      { id: 141, hanzi: "漂亮", pinyin: "piàoliang", english: "pretty; beautiful", category: "Adjectives & Particles", exZh: "你的衣服真漂亮！", exPy: "Nǐ de yīfu zhēn piàoliang!", exEn: "Your clothes are really pretty!" },
-      { id: 142, hanzi: "很", pinyin: "hěn", english: "very", category: "Adjectives & Particles", exZh: "我今天很忙。", exPy: "Wǒ jīntiān hěn máng.", exEn: "I am very busy today." },
-      { id: 143, hanzi: "太", pinyin: "tài", english: "too; excessively", category: "Adjectives & Particles", exZh: "太好了！", exPy: "Tài hǎo le!", exEn: "That's great!" },
-      { id: 144, hanzi: "都", pinyin: "dōu", english: "all; both", category: "Adjectives & Particles", exZh: "我们都是学生。", exPy: "Wǒmen dōu shì xuésheng.", exEn: "We are all students." },
-      { id: 145, hanzi: "不", pinyin: "bù", english: "no; not", category: "Adjectives & Particles", exZh: "我不是老师。", exPy: "Wǒ bú shì lǎoshī.", exEn: "I am not a teacher." },
-      { id: 146, hanzi: "没", pinyin: "méi", english: "not (have); didn't", category: "Adjectives & Particles", exZh: "我没有钱。", exPy: "Wǒ méiyǒu qián.", exEn: "I don't have money." },
-      { id: 147, hanzi: "的", pinyin: "de", english: "possessive particle ('s)", category: "Adjectives & Particles", exZh: "这是我的书。", exPy: "Zhè shì wǒ de shū.", exEn: "This is my book." },
-      { id: 148, hanzi: "了", pinyin: "le", english: "completed action particle", category: "Adjectives & Particles", exZh: "我吃饭了。", exPy: "Wǒ chīfàn le.", exEn: "I have eaten." },
-      { id: 149, hanzi: "吗", pinyin: "ma", english: "yes/no question particle", category: "Adjectives & Particles", exZh: "你是学生吗？", exPy: "Nǐ shì xuésheng ma?", exEn: "Are you a student?" },
-      { id: 150, hanzi: "呢", pinyin: "ne", english: "question particle ('and you?')", category: "Adjectives & Particles", exZh: "我很好，你呢？", exPy: "Wǒ hěn hǎo, nǐ ne?", exEn: "I'm very good, and you?" }
+    // Complete 150 HSK 1 Vocabulary Dataset (Safe double-quoted strings with zero unescaped double quotes)
+    const HSK1_WORDS = [
+      { id: 1, hanzi: "爱", pinyin: "ài", en: "to love", fr: "aimer", category: "verbs", exampleHanzi: "我爱我的家人。", examplePinyin: "Wǒ ài wǒ de jiārén.", exampleEn: "I love my family.", exampleFr: "J'aime ma famille." },
+      { id: 2, hanzi: "八", pinyin: "bā", en: "eight", fr: "huit", category: "numbers", exampleHanzi: "我有八本书。", examplePinyin: "Wǒ yǒu bā běn shū.", exampleEn: "I have eight books.", exampleFr: "J'ai huit livres." },
+      { id: 3, hanzi: "爸爸", pinyin: "bàba", en: "father / dad", fr: "papa / père", category: "people", exampleHanzi: "我爸爸是医生。", examplePinyin: "Wǒ bàba shì yīshēng.", exampleEn: "My dad is a doctor.", exampleFr: "Mon père est médecin." },
+      { id: 4, hanzi: "杯子", pinyin: "bēizi", en: "cup / glass", fr: "tasse / verre", category: "nouns", exampleHanzi: "杯子里有水。", examplePinyin: "Bēizi lǐ yǒu shuǐ.", exampleEn: "There is water in the cup.", exampleFr: "Il y a de l'eau dans le verre." },
+      { id: 5, hanzi: "北京", pinyin: "Běijīng", en: "Beijing", fr: "Pékin", category: "nouns", exampleHanzi: "我住在北京。", examplePinyin: "Wǒ zhù zài Běijīng.", exampleEn: "I live in Beijing.", exampleFr: "J'habite à Pékin." },
+      { id: 6, hanzi: "本", pinyin: "běn", en: "measure word for books", fr: "classificateur pour livres", category: "particles", exampleHanzi: "这是一本汉语书。", examplePinyin: "Zhè shì yī běn Hànyǔ shū.", exampleEn: "This is a Chinese book.", exampleFr: "C'est un livre de chinois." },
+      { id: 7, hanzi: "不客气", pinyin: "bú kèqi", en: "you are welcome", fr: "de rien / je vous en prie", category: "verbs", exampleHanzi: "谢谢你！不客气。", examplePinyin: "Xièxie nǐ! Bú kèqi.", exampleEn: "Thank you! You're welcome.", exampleFr: "Merci ! De rien." },
+      { id: 8, hanzi: "不", pinyin: "bù", en: "not / no", fr: "non / ne... pas", category: "particles", exampleHanzi: "我不是学生。", examplePinyin: "Wǒ bú shì xuésheng.", exampleEn: "I am not a student.", exampleFr: "Je ne suis pas étudiant." },
+      { id: 9, hanzi: "菜", pinyin: "cài", en: "dish / vegetable", fr: "plat / légume", category: "nouns", exampleHanzi: "中国菜很好吃。", examplePinyin: "Zhōngguó cài hěn hǎochī.", exampleEn: "Chinese food is delicious.", exampleFr: "La cuisine chinoise est délicieuse." },
+      { id: 10, hanzi: "茶", pinyin: "chá", en: "tea", fr: "thé", category: "nouns", exampleHanzi: "请喝一杯茶。", examplePinyin: "Qǐng hē yī bēi chá.", exampleEn: "Please drink a cup of tea.", exampleFr: "Veuillez boire une tasse de thé." },
+      { id: 11, hanzi: "吃", pinyin: "chī", en: "to eat", fr: "manger", category: "verbs", exampleHanzi: "我想吃米饭。", examplePinyin: "Wǒ xiǎng chī mǐfàn.", exampleEn: "I want to eat rice.", exampleFr: "Je veux manger du riz." },
+      { id: 12, hanzi: "出租车", pinyin: "chūzūchē", en: "taxi", fr: "taxi", category: "nouns", exampleHanzi: "我们坐出租车去。", examplePinyin: "Wǒmen zuò chūzūchē qù.", exampleEn: "We go by taxi.", exampleFr: "Nous y allons en taxi." },
+      { id: 13, hanzi: "打电话", pinyin: "dǎ diànhuà", en: "to make a phone call", fr: "téléphoner", category: "verbs", exampleHanzi: "他在给妈妈打电话。", examplePinyin: "Tā zài gěi māma dǎ diànhuà.", exampleEn: "He is calling his mom.", exampleFr: "Il téléphone à sa maman." },
+      { id: 14, hanzi: "大", pinyin: "dà", en: "big / large", fr: "grand", category: "particles", exampleHanzi: "这个苹果很大。", examplePinyin: "Zhège píngguǒ hěn dà.", exampleEn: "This apple is very big.", exampleFr: "Cette pomme est très grande." },
+      { id: 15, hanzi: "的", pinyin: "de", en: "possessive particle", fr: "particule de possession", category: "particles", exampleHanzi: "这是我的电脑。", examplePinyin: "Zhè shì wǒ de diànnǎo.", exampleEn: "This is my computer.", exampleFr: "C'est mon ordinateur." },
+      { id: 16, hanzi: "点", pinyin: "diǎn", en: "o'clock / a little", fr: "heure / un peu", category: "numbers", exampleHanzi: "现在是下午三点。", examplePinyin: "Xiànzài shì xiàwǔ sān diǎn.", exampleEn: "It is 3 PM now.", exampleFr: "Il est trois heures de l'après-midi." },
+      { id: 17, hanzi: "电脑", pinyin: "diànnǎo", en: "computer", fr: "ordinateur", category: "nouns", exampleHanzi: "我买了一个新电脑。", examplePinyin: "Wǒ mǎile yī gè xīn diànnǎo.", exampleEn: "I bought a new computer.", exampleFr: "J'ai acheté un nouvel ordinateur." },
+      { id: 18, hanzi: "电视", pinyin: "diànshì", en: "television", fr: "télévision", category: "nouns", exampleHanzi: "爸爸喜欢看电视。", examplePinyin: "Bàba xǐhuan kàn diànshì.", exampleEn: "Dad likes watching TV.", exampleFr: "Papa aime regarder la télévision." },
+      { id: 19, hanzi: "电影", pinyin: "diànyǐng", en: "movie / film", fr: "film / cinéma", category: "nouns", exampleHanzi: "我们去看电影吧。", examplePinyin: "Wǒmen qù kàn diànyǐng ba.", exampleEn: "Let's go watch a movie.", exampleFr: "Allons voir un film." },
+      { id: 20, hanzi: "东西", pinyin: "dōngxi", en: "thing / stuff", fr: "chose / objet", category: "nouns", exampleHanzi: "商店里有很多东西。", examplePinyin: "Shāngdiàn lǐ yǒu hěn duō dōngxi.", exampleEn: "There are many things in the shop.", exampleFr: "Il y a beaucoup de choses dans le magasin." },
+      { id: 21, hanzi: "都", pinyin: "dōu", en: "all / both", fr: "tous / tout", category: "particles", exampleHanzi: "我们都是中国人。", examplePinyin: "Wǒmen dōu shì Zhōngguórén.", exampleEn: "We are all Chinese.", exampleFr: "Nous sommes tous chinois." },
+      { id: 22, hanzi: "读", pinyin: "dú", en: "to read aloud", fr: "lire à haute voix", category: "verbs", exampleHanzi: "请跟我读。", examplePinyin: "Qǐng gēn wǒ dú.", exampleEn: "Please read after me.", exampleFr: "Veuillez lire après moi." },
+      { id: 23, hanzi: "对不起", pinyin: "duìbuqǐ", en: "sorry", fr: "pardon / désolé", category: "verbs", exampleHanzi: "对不起，我来晚了。", examplePinyin: "Duìbuqǐ, wǒ lái wǎn le.", exampleEn: "Sorry, I am late.", exampleFr: "Désolé, je suis en retard." },
+      { id: 24, hanzi: "多", pinyin: "duō", en: "many / much", fr: "beaucoup / nombreux", category: "particles", exampleHanzi: "这里人很多。", examplePinyin: "Zhèlǐ rén hěn duō.", exampleEn: "There are many people here.", exampleFr: "Il y a beaucoup de monde ici." },
+      { id: 25, hanzi: "多少", pinyin: "duōshao", en: "how many / how much", fr: "combien", category: "numbers", exampleHanzi: "这个杯子多少钱？", examplePinyin: "Zhège bēizi duōshao qián?", exampleEn: "How much is this cup?", exampleFr: "Combien coûte cette tasse ?" },
+      { id: 26, hanzi: "儿子", pinyin: "érzi", en: "son", fr: "fils", category: "people", exampleHanzi: "他儿子五岁了。", examplePinyin: "Tā érzi wǔ suì le.", exampleEn: "His son is five years old.", exampleFr: "Son fils a cinq ans." },
+      { id: 27, hanzi: "二", pinyin: "èr", en: "two", fr: "deux", category: "numbers", exampleHanzi: "今天是二月二日。", examplePinyin: "Jīntiān shì èryuè èrrì.", exampleEn: "Today is February 2nd.", exampleFr: "Aujourd'hui c'est le 2 février." },
+      { id: 28, hanzi: "饭馆", pinyin: "fànguǎn", en: "restaurant", fr: "restaurant", category: "nouns", exampleHanzi: "我们在饭馆吃饭。", examplePinyin: "Wǒmen zài fànguǎn chīfàn.", exampleEn: "We eat at the restaurant.", exampleFr: "Nous mangeons au restaurant." },
+      { id: 29, hanzi: "飞机", pinyin: "fēijī", en: "airplane", fr: "avion", category: "nouns", exampleHanzi: "我坐飞机去中国。", examplePinyin: "Wǒ zuò fēijī qù Zhōngguó.", exampleEn: "I take a plane to China.", exampleFr: "Je prends l'avion pour la Chine." },
+      { id: 30, hanzi: "分钟", pinyin: "fēnzhōng", en: "minute", fr: "minute", category: "numbers", exampleHanzi: "请等我十分钟。", examplePinyin: "Qǐng děng wǒ shí fēnzhōng.", exampleEn: "Please wait ten minutes for me.", exampleFr: "Attendez-moi dix minutes s'il vous plaît." },
+      { id: 31, hanzi: "高兴", pinyin: "gāoxìng", en: "happy / glad", fr: "content / heureux", category: "particles", exampleHanzi: "认识你很高兴。", examplePinyin: "Rènshi nǐ hěn gāoxìng.", exampleEn: "Nice to meet you.", exampleFr: "Ravi de faire votre connaissance." },
+      { id: 32, hanzi: "个", pinyin: "gè", en: "general measure word", fr: "classificateur général", category: "particles", exampleHanzi: "我有一个哥哥。", examplePinyin: "Wǒ yǒu yī gè gēge.", exampleEn: "I have one older brother.", exampleFr: "J'ai un grand frère." },
+      { id: 33, hanzi: "工作", pinyin: "gōngzuò", en: "work / job", fr: "travail / travailler", category: "verbs", exampleHanzi: "我在医院工作。", examplePinyin: "Wǒ zài yīyuàn gōngzuò.", exampleEn: "I work at the hospital.", exampleFr: "Je travaille à l'hôpital." },
+      { id: 34, hanzi: "狗", pinyin: "gǒu", en: "dog", fr: "chien", category: "nouns", exampleHanzi: "这只小狗很可爱。", examplePinyin: "Zhè zhī xiǎo gǒu hěn kě'ài.", exampleEn: "This little dog is very cute.", exampleFr: "Ce petit chien est très mignon." },
+      { id: 35, hanzi: "汉语", pinyin: "Hànyǔ", en: "Chinese language", fr: "langue chinoise", category: "nouns", exampleHanzi: "我会说一点儿汉语。", examplePinyin: "Wǒ huì shuō yīdiǎnr Hànyǔ.", exampleEn: "I can speak a little Chinese.", exampleFr: "Je sais parler un peu chinois." },
+      { id: 36, hanzi: "好", pinyin: "hǎo", en: "good / well", fr: "bon / bien", category: "particles", exampleHanzi: "今天天气很好。", examplePinyin: "Jīntiān tiānqì hěn hǎo.", exampleEn: "The weather is very good today.", exampleFr: "Il fait très beau aujourd'hui." },
+      { id: 37, hanzi: "喝", pinyin: "hē", en: "to drink", fr: "boire", category: "verbs", exampleHanzi: "你想喝什么？", examplePinyin: "Nǐ xiǎng hē shénme?", exampleEn: "What would you like to drink?", exampleFr: "Que veux-tu boire ?" },
+      { id: 38, hanzi: "和", pinyin: "hé", en: "and / with", fr: "et / avec", category: "particles", exampleHanzi: "我和妈妈去商店。", examplePinyin: "Wǒ hé māma qù shāngdiàn.", exampleEn: "Mom and I go to the store.", exampleFr: "Maman et moi allons au magasin." },
+      { id: 39, hanzi: "很", pinyin: "hěn", en: "very", fr: "très", category: "particles", exampleHanzi: "她很漂亮。", examplePinyin: "Tā hěn piàoliang.", exampleEn: "She is very pretty.", exampleFr: "Elle est très jolie." },
+      { id: 40, hanzi: "后面", pinyin: "hòumiàn", en: "behind / back", fr: "derrière / arrière", category: "nouns", exampleHanzi: "学校在商店后面。", examplePinyin: "Xuéxiào zài shāngdiàn hòumiàn.", exampleEn: "The school is behind the shop.", exampleFr: "L'école est derrière le magasin." },
+      { id: 41, hanzi: "回", pinyin: "huí", en: "to return / go back", fr: "retourner / rentrer", category: "verbs", exampleHanzi: "我下午五点回家。", examplePinyin: "Wǒ xiàwǔ wǔ diǎn huí jiā.", exampleEn: "I go home at 5 PM.", exampleFr: "Je rentre à la maison à 17h." },
+      { id: 42, hanzi: "会", pinyin: "huì", en: "can / know how to", fr: "savoir faire / pouvoir", category: "verbs", exampleHanzi: "我会写汉字。", examplePinyin: "Wǒ huì xiě Hànzì.", exampleEn: "I can write Chinese characters.", exampleFr: "Je sais écrire les caractères chinois." },
+      { id: 43, hanzi: "火车站", pinyin: "huǒchēzhàn", en: "train station", fr: "gare ferroviaire", category: "nouns", exampleHanzi: "火车站在哪儿？", examplePinyin: "Huǒchēzhàn zài nǎr?", exampleEn: "Where is the train station?", exampleFr: "Où est la gare ?" },
+      { id: 44, hanzi: "几", pinyin: "jǐ", en: "how many / several", fr: "combien / quelques", category: "numbers", exampleHanzi: "你有几个好朋友？", examplePinyin: "Nǐ yǒu jǐ gè hǎo péngyou?", exampleEn: "How many good friends do you have?", exampleFr: "Combien de bons amis as-tu ?" },
+      { id: 45, hanzi: "家", pinyin: "jiā", en: "home / family", fr: "maison / famille", category: "nouns", exampleHanzi: "我家有四口人。", examplePinyin: "Wǒ jiā yǒu sì kǒu rén.", exampleEn: "There are four people in my family.", exampleFr: "Il y a quatre personnes dans ma famille." },
+      { id: 46, hanzi: "叫", pinyin: "jiào", en: "to be called / call", fr: "s'appeler / appeler", category: "verbs", exampleHanzi: "你叫什么名字？", examplePinyin: "Nǐ jiào shénme míngzi?", exampleEn: "What is your name?", exampleFr: "Comment t'appelles-tu ?" },
+      { id: 47, hanzi: "今天", pinyin: "jīntiān", en: "today", fr: "aujourd'hui", category: "numbers", exampleHanzi: "今天星期一。", examplePinyin: "Jīntiān xīngqīyī.", exampleEn: "Today is Monday.", exampleFr: "Aujourd'hui c'est lundi." },
+      { id: 48, hanzi: "九", pinyin: "jiǔ", en: "nine", fr: "neuf", category: "numbers", exampleHanzi: "现在九点了。", examplePinyin: "Xiànzài jiǔ diǎn le.", exampleEn: "It is nine o'clock now.", exampleFr: "Il est neuf heures maintenant." },
+      { id: 49, hanzi: "开", pinyin: "kāi", en: "to open / drive", fr: "ouvrir / conduire", category: "verbs", exampleHanzi: "请开门。", examplePinyin: "Qǐng kāi mén.", exampleEn: "Please open the door.", exampleFr: "Ouvrez la porte s'il vous plaît." },
+      { id: 50, hanzi: "看", pinyin: "kàn", en: "to look / watch / read", fr: "regarder / voir / lire", category: "verbs", exampleHanzi: "我在看书。", examplePinyin: "Wǒ zài kàn shū.", exampleEn: "I am reading a book.", exampleFr: "Je suis en train de lire un livre." },
+      { id: 51, hanzi: "看见", pinyin: "kànjiàn", en: "to see", fr: "voir / apercevoir", category: "verbs", exampleHanzi: "我看见王老师了。", examplePinyin: "Wǒ kànjiàn Wáng lǎoshī le.", exampleEn: "I saw Teacher Wang.", exampleFr: "J'ai vu le professeur Wang." },
+      { id: 52, hanzi: "块", pinyin: "kuài", en: "yuan (currency) / piece", fr: "yuan (monnaie) / morceau", category: "numbers", exampleHanzi: "这本书三十块钱。", examplePinyin: "Zhè běn shū sānshí kuài qián.", exampleEn: "This book costs 30 yuan.", exampleFr: "Ce livre coûte trente yuans." },
+      { id: 53, hanzi: "来", pinyin: "lái", en: "to come", fr: "venir", category: "verbs", exampleHanzi: "欢迎来我家。", examplePinyin: "Huānyíng lái wǒ jiā.", exampleEn: "Welcome to my home.", exampleFr: "Bienvenue chez moi." },
+      { id: 54, hanzi: "老师", pinyin: "lǎoshī", en: "teacher", fr: "professeur / enseignant", category: "people", exampleHanzi: "李老师教我们汉语。", examplePinyin: "Lǐ lǎoshī jiāo wǒmen Hànyǔ.", exampleEn: "Teacher Li teaches us Chinese.", exampleFr: "Le professeur Li nous enseigne le chinois." },
+      { id: 55, hanzi: "了", pinyin: "le", en: "completed action particle", fr: "particule d'action accomplie", category: "particles", exampleHanzi: "我吃饭了。", examplePinyin: "Wǒ chīfàn le.", exampleEn: "I have eaten.", exampleFr: "J'ai mangé." },
+      { id: 56, hanzi: "冷", pinyin: "lěng", en: "cold", fr: "froid", category: "particles", exampleHanzi: "今天天气很冷。", examplePinyin: "Jīntiān tiānqì hěn lěng.", exampleEn: "Today is very cold.", exampleFr: "Il fait très froid aujourd'hui." },
+      { id: 57, hanzi: "里", pinyin: "lǐ", en: "inside / in", fr: "dedans / à l'intérieur", category: "nouns", exampleHanzi: "书在书包里。", examplePinyin: "Shū zài shūbāo lǐ.", exampleEn: "The book is in the backpack.", exampleFr: "Le livre est dans le sac." },
+      { id: 58, hanzi: "零", pinyin: "líng", en: "zero", fr: "zéro", category: "numbers", exampleHanzi: "现在是零度。", examplePinyin: "Xiànzài shì líng dù.", exampleEn: "It is zero degrees now.", exampleFr: "Il fait zéro degré maintenant." },
+      { id: 59, hanzi: "六", pinyin: "liù", en: "six", fr: "six", category: "numbers", exampleHanzi: "桌子上有六个杯子。", examplePinyin: "Zhuōzi shàng yǒu liù gè bēizi.", exampleEn: "There are six cups on the table.", exampleFr: "Il y a six tasses sur la table." },
+      { id: 60, hanzi: "妈妈", pinyin: "māma", en: "mother / mom", fr: "maman / mère", category: "people", exampleHanzi: "我妈妈很喜欢做饭。", examplePinyin: "Wǒ māma hěn xǐhuan zuòfàn.", exampleEn: "My mom likes cooking.", exampleFr: "Ma maman aime beaucoup cuisiner." },
+      { id: 61, hanzi: "吗", pinyin: "ma", en: "question particle", fr: "particule interrogative", category: "particles", exampleHanzi: "你好吗？", examplePinyin: "Nǐ hǎo ma?", exampleEn: "How are you?", exampleFr: "Comment vas-tu ?" },
+      { id: 62, hanzi: "买", pinyin: "mǎi", en: "to buy", fr: "acheter", category: "verbs", exampleHanzi: "我想买水果。", examplePinyin: "Wǒ xiǎng mǎi shuǐguǒ.", exampleEn: "I want to buy fruit.", exampleFr: "Je veux acheter des fruits." },
+      { id: 63, hanzi: "猫", pinyin: "māo", en: "cat", fr: "chat", category: "nouns", exampleHanzi: "椅子下面有一只猫。", examplePinyin: "Yǐzi xiàmiàn yǒu yī zhī māo.", exampleEn: "There is a cat under the chair.", exampleFr: "Il y a un chat sous la chaise." },
+      { id: 64, hanzi: "没", pinyin: "méi", en: "not / have not", fr: "ne... pas / sans", category: "particles", exampleHanzi: "我没去北京。", examplePinyin: "Wǒ méi qù Běijīng.", exampleEn: "I didn't go to Beijing.", exampleFr: "Je ne suis pas allé à Pékin." },
+      { id: 65, hanzi: "没关系", pinyin: "méi guānxi", en: "it doesn't matter / no problem", fr: "ce n'est pas grave", category: "verbs", exampleHanzi: "对不起！没关系。", examplePinyin: "Duìbuqǐ! Méi guānxi.", exampleEn: "Sorry! No problem.", exampleFr: "Désolé ! Ce n'est pas grave." },
+      { id: 66, hanzi: "米饭", pinyin: "mǐfàn", en: "cooked rice", fr: "riz cuit", category: "nouns", exampleHanzi: "中国人喜欢吃米饭。", examplePinyin: "Zhōngguórén xǐhuan chī mǐfàn.", exampleEn: "Chinese people like eating rice.", exampleFr: "Les Chinois aiment manger du riz." },
+      { id: 67, hanzi: "明天", pinyin: "míngtiān", en: "tomorrow", fr: "demain", category: "numbers", exampleHanzi: "明天见！", examplePinyin: "Míngtiān jiàn!", exampleEn: "See you tomorrow!", exampleFr: "À demain !" },
+      { id: 68, hanzi: "名字", pinyin: "míngzi", en: "name", fr: "nom / prénom", category: "nouns", exampleHanzi: "我的名字叫大卫。", examplePinyin: "Wǒ de míngzi jiào Dàwèi.", exampleEn: "My name is David.", exampleFr: "Je m'appelle David." },
+      { id: 69, hanzi: "哪", pinyin: "nǎ", en: "which", fr: "quel / lequel", category: "people", exampleHanzi: "你是哪国人？", examplePinyin: "Nǐ shì nǎ guó rén?", exampleEn: "What nationality are you?", exampleFr: "De quelle nationalité es-tu ?" },
+      { id: 70, hanzi: "哪儿", pinyin: "nǎr", en: "where", fr: "où", category: "nouns", exampleHanzi: "你去哪儿？", examplePinyin: "Nǐ qù nǎr?", exampleEn: "Where are you going?", exampleFr: "Où vas-tu ?" },
+      { id: 71, hanzi: "那", pinyin: "nà", en: "that", fr: "cela / ce... là", category: "people", exampleHanzi: "那是什么？", examplePinyin: "Nà shì shénme?", exampleEn: "What is that?", exampleFr: "Qu'est-ce que c'est que ça ?" },
+      { id: 72, hanzi: "那儿", pinyin: "nàr", en: "there", fr: "là-bas", category: "nouns", exampleHanzi: "我的车在那儿。", examplePinyin: "Wǒ de chē zài nàr.", exampleEn: "My car is over there.", exampleFr: "Ma voiture est là-bas." },
+      { id: 73, hanzi: "呢", pinyin: "ne", en: "question particle (and you?)", fr: "particule (et toi ?)", category: "particles", exampleHanzi: "我很好，你呢？", examplePinyin: "Wǒ hěn hǎo, nǐ ne?", exampleEn: "I am fine, and you?", exampleFr: "Je vais bien, et toi ?" },
+      { id: 74, hanzi: "能", pinyin: "néng", en: "can / be able to", fr: "pouvoir / être capable", category: "verbs", exampleHanzi: "我能坐这儿吗？", examplePinyin: "Wǒ néng zuò zhèr ma?", exampleEn: "Can I sit here?", exampleFr: "Puis-je m'asseoir ici ?" },
+      { id: 75, hanzi: "你", pinyin: "nǐ", en: "you", fr: "tu / toi", category: "people", exampleHanzi: "你叫什么名字？", examplePinyin: "Nǐ jiào shénme míngzi?", exampleEn: "What is your name?", exampleFr: "Comment t'appelles-tu ?" },
+      { id: 76, hanzi: "年", pinyin: "nián", en: "year", fr: "année / an", category: "numbers", exampleHanzi: "我今年二十岁。", examplePinyin: "Wǒ jīnnián èrshí suì.", exampleEn: "I am twenty years old this year.", exampleFr: "J'ai vingt ans cette année." },
+      { id: 77, hanzi: "女儿", pinyin: "nǚ'ér", en: "daughter", fr: "fille (enfant)", category: "people", exampleHanzi: "她有两个女儿。", examplePinyin: "Tā yǒu liǎng gè nǚ'ér.", exampleEn: "She has two daughters.", exampleFr: "Elle a deux filles." },
+      { id: 78, hanzi: "朋友", pinyin: "péngyou", en: "friend", fr: "ami / amie", category: "people", exampleHanzi: "他是我的好朋友。", examplePinyin: "Tā shì wǒ de hǎo péngyou.", exampleEn: "He is my good friend.", exampleFr: "C'est mon bon ami." },
+      { id: 79, hanzi: "漂亮", pinyin: "piàoliang", en: "pretty / beautiful", fr: "joli / beau", category: "particles", exampleHanzi: "你的衣服很漂亮。", examplePinyin: "Nǐ de yīfu hěn piàoliang.", exampleEn: "Your clothes are very pretty.", exampleFr: "Tes vêtements sont très jolis." },
+      { id: 80, hanzi: "苹果", pinyin: "píngguǒ", en: "apple", fr: "pomme", category: "nouns", exampleHanzi: "我想吃一个苹果。", examplePinyin: "Wǒ xiǎng chī yī gè píngguǒ.", exampleEn: "I want to eat an apple.", exampleFr: "Je veux manger une pomme." },
+      { id: 81, hanzi: "七", pinyin: "qī", en: "seven", fr: "sept", category: "numbers", exampleHanzi: "一个星期有七天。", examplePinyin: "Yī gè xīngqī yǒu qī tiān.", exampleEn: "A week has seven days.", exampleFr: "Une semaine compte sept jours." },
+      { id: 82, hanzi: "钱", pinyin: "qián", en: "money", fr: "argent", category: "nouns", exampleHanzi: "我今天没带钱。", examplePinyin: "Wǒ jīntiān méi dài qián.", exampleEn: "I didn't bring money today.", exampleFr: "Je n'ai pas pris d'argent aujourd'hui." },
+      { id: 83, hanzi: "前面", pinyin: "qiánmiàn", en: "in front / ahead", fr: "devant", category: "nouns", exampleHanzi: "前面那个人是我同学。", examplePinyin: "Qiánmiàn nàge rén shì wǒ tóngxué.", exampleEn: "The person in front is my classmate.", exampleFr: "La personne devant est mon camarade." },
+      { id: 84, hanzi: "请", pinyin: "qǐng", en: "please / to invite", fr: "s'il vous plaît / inviter", category: "verbs", exampleHanzi: "请进，请坐！", examplePinyin: "Qǐng jìn, qǐng zuò!", exampleEn: "Please come in, please sit down!", exampleFr: "Entrez je vous en prie, asseyez-vous !" },
+      { id: 85, hanzi: "去", pinyin: "qù", en: "to go", fr: "aller", category: "verbs", exampleHanzi: "明天我去学校。", examplePinyin: "Míngtiān wǒ qù xuéxiào.", exampleEn: "Tomorrow I go to school.", exampleFr: "Demain je vais à l'école." },
+      { id: 86, hanzi: "热", pinyin: "rè", en: "hot", fr: "chaud", category: "particles", exampleHanzi: "夏天很热。", examplePinyin: "Xiàtiān hěn rè.", exampleEn: "Summer is very hot.", exampleFr: "L'été est très chaud." },
+      { id: 87, hanzi: "人", pinyin: "rén", en: "person / people", fr: "personne / gens", category: "people", exampleHanzi: "公园里有很多人。", examplePinyin: "Gōngyuán lǐ yǒu hěn duō rén.", exampleEn: "There are many people in the park.", exampleFr: "Il y a beaucoup de monde dans le parc." },
+      { id: 88, hanzi: "认识", pinyin: "rènshi", en: "to know / meet", fr: "connaître / rencontrer", category: "verbs", exampleHanzi: "我认识他。", examplePinyin: "Wǒ rènshi tā.", exampleEn: "I know him.", exampleFr: "Je le connais." },
+      { id: 89, hanzi: "日", pinyin: "rì", en: "day / sun / date", fr: "jour / soleil / date", category: "numbers", exampleHanzi: "今天是十月一日。", examplePinyin: "Jīntiān shì shíyuè yīrì.", exampleEn: "Today is October 1st.", exampleFr: "Aujourd'hui c'est le 1er octobre." },
+      { id: 90, hanzi: "三", pinyin: "sān", en: "three", fr: "trois", category: "numbers", exampleHanzi: "我有三个苹果。", examplePinyin: "Wǒ yǒu sān gè píngguǒ.", exampleEn: "I have three apples.", exampleFr: "J'ai trois pommes." },
+      { id: 91, hanzi: "商店", pinyin: "shāngdiàn", en: "shop / store", fr: "magasin / boutique", category: "nouns", exampleHanzi: "她去商店买东西了。", examplePinyin: "Tā qù shāngdiàn mǎi dōngxi le.", exampleEn: "She went to the shop to buy things.", exampleFr: "Elle est allée au magasin faire des achats." },
+      { id: 92, hanzi: "上", pinyin: "shàng", en: "up / on / above", fr: "sur / haut / monter", category: "nouns", exampleHanzi: "猫在桌子上。", examplePinyin: "Māo zài zhuōzi shàng.", exampleEn: "The cat is on the table.", exampleFr: "Le chat est sur la table." },
+      { id: 93, hanzi: "上午", pinyin: "shàngwǔ", en: "morning", fr: "matin", category: "numbers", exampleHanzi: "上午我有汉语课。", examplePinyin: "Shàngwǔ wǒ yǒu Hànyǔ kè.", exampleEn: "I have Chinese class in the morning.", exampleFr: "J'ai cours de chinois le matin." },
+      { id: 94, hanzi: "少", pinyin: "shǎo", en: "few / little", fr: "peu", category: "particles", exampleHanzi: "杯子里的水很少。", examplePinyin: "Bēizi lǐ de shuǐ hěn shǎo.", exampleEn: "There is very little water in the cup.", exampleFr: "Il y a très peu d'eau dans le verre." },
+      { id: 95, hanzi: "谁", pinyin: "shéi", en: "who", fr: "qui", category: "people", exampleHanzi: "那个人是谁？", examplePinyin: "Nàge rén shì shéi?", exampleEn: "Who is that person?", exampleFr: "Qui est cette personne ?" },
+      { id: 96, hanzi: "什么", pinyin: "shénme", en: "what", fr: "quoi / quel", category: "people", exampleHanzi: "你想吃什么？", examplePinyin: "Nǐ xiǎng chī shénme?", exampleEn: "What do you want to eat?", exampleFr: "Que veux-tu manger ?" },
+      { id: 97, hanzi: "十", pinyin: "shí", en: "ten", fr: "dix", category: "numbers", exampleHanzi: "他十岁了。", examplePinyin: "Tā shí suì le.", exampleEn: "He is ten years old.", exampleFr: "Il a dix ans." },
+      { id: 98, hanzi: "时候", pinyin: "shíhou", en: "time / moment", fr: "moment / quand", category: "numbers", exampleHanzi: "你什么时候回家？", examplePinyin: "Nǐ shénme shíhou huí jiā?", exampleEn: "When are you going home?", exampleFr: "Quand rentres-tu à la maison ?" },
+      { id: 99, hanzi: "是", pinyin: "shì", en: "to be (is/am/are)", fr: "être", category: "verbs", exampleHanzi: "我是大学生。", examplePinyin: "Wǒ shì dàxuéshēng.", exampleEn: "I am a university student.", exampleFr: "Je suis étudiant à l'université." },
+      { id: 100, hanzi: "书", pinyin: "shū", en: "book", fr: "livre", category: "nouns", exampleHanzi: "我喜欢看书。", examplePinyin: "Wǒ xǐhuan kàn shū.", exampleEn: "I like reading books.", exampleFr: "J'aime lire des livres." },
+      { id: 101, hanzi: "水", pinyin: "shuǐ", en: "water", fr: "eau", category: "nouns", exampleHanzi: "请给我一杯水。", examplePinyin: "Qǐng gěi wǒ yī bēi shuǐ.", exampleEn: "Please give me a glass of water.", exampleFr: "Donnez-moi un verre d'eau s'il vous plaît." },
+      { id: 102, hanzi: "水果", pinyin: "shuǐguǒ", en: "fruit", fr: "fruit", category: "nouns", exampleHanzi: "多吃水果对身体好。", examplePinyin: "Duō chī shuǐguǒ duì shēntǐ hǎo.", exampleEn: "Eating more fruit is good for health.", exampleFr: "Manger plus de fruits est bon pour la santé." },
+      { id: 103, hanzi: "睡觉", pinyin: "shuìjiào", en: "to sleep", fr: "dormir", category: "verbs", exampleHanzi: "我晚上十一点睡觉。", examplePinyin: "Wǒ wǎnshang shíyī diǎn shuìjiào.", exampleEn: "I go to sleep at 11 PM.", exampleFr: "Je vais dormir à 23 heures." },
+      { id: 104, hanzi: "说话", pinyin: "shuōhuà", en: "to speak / talk", fr: "parler", category: "verbs", exampleHanzi: "请大家不要说话。", examplePinyin: "Qǐng dàjiā bú yào shuōhuà.", exampleEn: "Everyone please do not talk.", exampleFr: "Veuillez ne pas parler s'il vous plaît." },
+      { id: 105, hanzi: "四", pinyin: "sì", en: "four", fr: "quatre", category: "numbers", exampleHanzi: "我家有四口人。", examplePinyin: "Wǒ jiā yǒu sì kǒu rén.", exampleEn: "My family has four people.", exampleFr: "Ma famille compte quatre personnes." },
+      { id: 106, hanzi: "岁", pinyin: "suì", en: "years old", fr: "ans (âge)", category: "numbers", exampleHanzi: "你今年几岁？", examplePinyin: "Nǐ jīnnián jǐ suì?", exampleEn: "How old are you this year?", exampleFr: "Quel âge as-tu cette année ?" },
+      { id: 107, hanzi: "他", pinyin: "tā", en: "he / him", fr: "il / lui", category: "people", exampleHanzi: "他是我的哥哥。", examplePinyin: "Tā shì wǒ de gēge.", exampleEn: "He is my older brother.", exampleFr: "C'est mon grand frère." },
+      { id: 108, hanzi: "她", pinyin: "tā", en: "she / her", fr: "elle", category: "people", exampleHanzi: "她是我姐姐。", examplePinyin: "Tā shì wǒ jiějie.", exampleEn: "She is my older sister.", exampleFr: "C'est ma grande sœur." },
+      { id: 109, hanzi: "太", pinyin: "tài", en: "too / excessively", fr: "trop / extrêmement", category: "particles", exampleHanzi: "太好了！", examplePinyin: "Tài hǎo le!", exampleEn: "That's great!", exampleFr: "C'est génial !" },
+      { id: 110, hanzi: "天气", pinyin: "tiānqì", en: "weather", fr: "temps / météo", category: "nouns", exampleHanzi: "明天天气怎么样？", examplePinyin: "Míngtiān tiānqì zěnmeyàng?", exampleEn: "How will the weather be tomorrow?", exampleFr: "Quel temps fera-t-il demain ?" },
+      { id: 111, hanzi: "听", pinyin: "tīng", en: "to listen / hear", fr: "écouter / entendre", category: "verbs", exampleHanzi: "我喜欢听音乐。", examplePinyin: "Wǒ xǐhuan tīng yīnyuè.", exampleEn: "I like listening to music.", exampleFr: "J'aime écouter de la musique." },
+      { id: 112, hanzi: "同学", pinyin: "tóngxué", en: "classmate", fr: "camarade de classe", category: "people", exampleHanzi: "我们是大学同学。", examplePinyin: "Wǒmen shì dàxué tóngxué.", exampleEn: "We are university classmates.", exampleFr: "Nous sommes camarades d'université." },
+      { id: 113, hanzi: "喂", pinyin: "wèi", en: "hello (on phone)", fr: "allô (au téléphone)", category: "verbs", exampleHanzi: "喂，请问王老师在吗？", examplePinyin: "Wèi, qǐngwèn Wáng lǎoshī zài ma?", exampleEn: "Hello, may I ask if Teacher Wang is there?", exampleFr: "Allô, le professeur Wang est-il là ?" },
+      { id: 114, hanzi: "我", pinyin: "wǒ", en: "I / me", fr: "je / moi", category: "people", exampleHanzi: "我是法国人。", examplePinyin: "Wǒ shì Fǎguórén.", exampleEn: "I am French.", exampleFr: "Je suis français." },
+      { id: 115, hanzi: "我们", pinyin: "wǒmen", en: "we / us", fr: "nous", category: "people", exampleHanzi: "我们一起去吧。", examplePinyin: "Wǒmen yīqǐ qù ba.", exampleEn: "Let's go together.", exampleFr: "Allons-y ensemble." },
+      { id: 116, hanzi: "五", pinyin: "wǔ", en: "five", fr: "cinq", category: "numbers", exampleHanzi: "我有五块钱。", examplePinyin: "Wǒ yǒu wǔ kuài qián.", exampleEn: "I have five yuan.", exampleFr: "J'ai cinq yuans." },
+      { id: 117, hanzi: "喜欢", pinyin: "xǐhuan", en: "to like", fr: "aimer bien / apprécier", category: "verbs", exampleHanzi: "我喜欢学习汉语。", examplePinyin: "Wǒ xǐhuan xuéxí Hànyǔ.", exampleEn: "I like studying Chinese.", exampleFr: "J'aime étudier le chinois." },
+      { id: 118, hanzi: "下", pinyin: "xià", en: "down / below / next", fr: "sous / bas / prochain", category: "nouns", exampleHanzi: "小狗在桌子下面。", examplePinyin: "Xiǎo gǒu zài zhuōzi xiàmiàn.", exampleEn: "The puppy is under the table.", exampleFr: "Le chiot est sous la table." },
+      { id: 119, hanzi: "下午", pinyin: "xiàwǔ", en: "afternoon", fr: "après-midi", category: "numbers", exampleHanzi: "今天下午我去商店。", examplePinyin: "Jīntiān xiàwǔ wǒ qù shāngdiàn.", exampleEn: "This afternoon I am going to the store.", exampleFr: "Cet après-midi je vais au magasin." },
+      { id: 120, hanzi: "下雨", pinyin: "xiàyǔ", en: "to rain", fr: "pleuvoir", category: "verbs", exampleHanzi: "外面下雨了。", examplePinyin: "Wàimiàn xiàyǔ le.", exampleEn: "It is raining outside.", exampleFr: "Il pleut dehors." },
+      { id: 121, hanzi: "先生", pinyin: "xiānsheng", en: "Mr. / sir / husband", fr: "Monsieur / mari", category: "people", exampleHanzi: "王先生不在家。", examplePinyin: "Wáng xiānsheng bú zài jiā.", exampleEn: "Mr. Wang is not at home.", exampleFr: "Monsieur Wang n'est pas à la maison." },
+      { id: 122, hanzi: "现在", pinyin: "xiànzài", en: "now", fr: "maintenant", category: "numbers", exampleHanzi: "现在几点了？", examplePinyin: "Xiànzài jǐ diǎn le?", exampleEn: "What time is it now?", exampleFr: "Quelle heure est-il maintenant ?" },
+      { id: 123, hanzi: "想", pinyin: "xiǎng", en: "to want / think / miss", fr: "vouloir / penser / manquer", category: "verbs", exampleHanzi: "我想回家。", examplePinyin: "Wǒ xiǎng huí jiā.", exampleEn: "I want to go home.", exampleFr: "Je veux rentrer à la maison." },
+      { id: 124, hanzi: "小", pinyin: "xiǎo", en: "small / little", fr: "petit", category: "particles", exampleHanzi: "这个杯子太小了。", examplePinyin: "Zhège bēizi tài xiǎo le.", exampleEn: "This cup is too small.", exampleFr: "Cette tasse est trop petite." },
+      { id: 125, hanzi: "小姐", pinyin: "xiǎojiě", en: "Miss / young lady", fr: "Mademoiselle", category: "people", exampleHanzi: "李小姐很漂亮。", examplePinyin: "Lǐ xiǎojiě hěn piàoliang.", exampleEn: "Miss Li is very pretty.", exampleFr: "Mademoiselle Li est très jolie." },
+      { id: 126, hanzi: "些", pinyin: "xiē", en: "some / a few", fr: "quelques / certains", category: "particles", exampleHanzi: "我想买一些水果。", examplePinyin: "Wǒ xiǎng mǎi yīxiē shuǐguǒ.", exampleEn: "I want to buy some fruit.", exampleFr: "Je veux acheter quelques fruits." },
+      { id: 127, hanzi: "写", pinyin: "xiě", en: "to write", fr: "écrire", category: "verbs", exampleHanzi: "请写你的名字。", examplePinyin: "Qǐng xiě nǐ de míngzi.", exampleEn: "Please write your name.", exampleFr: "Veuillez écrire votre nom." },
+      { id: 128, hanzi: "谢谢", pinyin: "xièxie", en: "thank you", fr: "merci", category: "verbs", exampleHanzi: "谢谢你的帮助。", examplePinyin: "Xièxie nǐ de bāngzhù.", exampleEn: "Thank you for your help.", exampleFr: "Merci pour ton aide." },
+      { id: 129, hanzi: "星期", pinyin: "xīngqī", en: "week", fr: "semaine", category: "numbers", exampleHanzi: "今天星期几？", examplePinyin: "Jīntiān xīngqī jǐ?", exampleEn: "What day of the week is today?", exampleFr: "Quel jour de la semaine sommes-nous ?" },
+      { id: 130, hanzi: "学生", pinyin: "xuésheng", en: "student", fr: "étudiant / élève", category: "people", exampleHanzi: "学校里有很多学生。", examplePinyin: "Xuéxiào lǐ yǒu hěn duō xuésheng.", exampleEn: "There are many students in the school.", exampleFr: "Il y a beaucoup d'étudiants dans l'école." },
+      { id: 131, hanzi: "学习", pinyin: "xuéxí", en: "to study / learn", fr: "étudier / apprendre", category: "verbs", exampleHanzi: "我在中国学习汉语。", examplePinyin: "Wǒ zài Zhōngguó xuéxí Hànyǔ.", exampleEn: "I study Chinese in China.", exampleFr: "J'étudie le chinois en Chine." },
+      { id: 132, hanzi: "学校", pinyin: "xuéxiào", en: "school", fr: "école", category: "nouns", exampleHanzi: "我们的学校很大。", examplePinyin: "Wǒmen de xuéxiào hěn dà.", exampleEn: "Our school is very big.", exampleFr: "Notre école est très grande." },
+      { id: 133, hanzi: "一", pinyin: "yī", en: "one", fr: "un", category: "numbers", exampleHanzi: "我有一只猫。", examplePinyin: "Wǒ yǒu yī zhī māo.", exampleEn: "I have one cat.", exampleFr: "J'ai un chat." },
+      { id: 134, hanzi: "衣服", pinyin: "yīfu", en: "clothes", fr: "vêtements", category: "nouns", exampleHanzi: "妈妈买了很多衣服。", examplePinyin: "Māma mǎile hěn duō yīfu.", exampleEn: "Mom bought many clothes.", exampleFr: "Maman a acheté beaucoup de vêtements." },
+      { id: 135, hanzi: "医生", pinyin: "yīshēng", en: "doctor", fr: "médecin / docteur", category: "people", exampleHanzi: "他是一位好医生。", examplePinyin: "Tā shì yī wèi hǎo yīshēng.", exampleEn: "He is a good doctor.", exampleFr: "C'est un bon médecin." },
+      { id: 136, hanzi: "医院", pinyin: "yīyuàn", en: "hospital", fr: "hôpital", category: "nouns", exampleHanzi: "他生病了，去医院了。", examplePinyin: "Tā shēngbìng le, qù yīyuàn le.", exampleEn: "He got sick and went to the hospital.", exampleFr: "Il est tombé malade et est allé à l'hôpital." },
+      { id: 137, hanzi: "椅子", pinyin: "yǐzi", en: "chair", fr: "chaise", category: "nouns", exampleHanzi: "请坐在椅子上。", examplePinyin: "Qǐng zuò zài yǐzi shàng.", exampleEn: "Please sit on the chair.", exampleFr: "Asseyez-vous sur la chaise s'il vous plaît." },
+      { id: 138, hanzi: "有", pinyin: "yǒu", en: "to have / there is", fr: "avoir / il y a", category: "verbs", exampleHanzi: "我有一辆自行车。", examplePinyin: "Wǒ yǒu yī liàng zìxíngchē.", exampleEn: "I have a bicycle.", exampleFr: "J'ai un vélo." },
+      { id: 139, hanzi: "月", pinyin: "yuè", en: "month / moon", fr: "mois / lune", category: "numbers", exampleHanzi: "一年有十二个月。", examplePinyin: "Yī nián yǒu shí'èr gè yuè.", exampleEn: "A year has twelve months.", exampleFr: "Une année compte douze mois." },
+      { id: 140, hanzi: "在", pinyin: "zài", en: "at / in / ongoing action", fr: "à / dans / en train de", category: "verbs", exampleHanzi: "爸爸在家里。", examplePinyin: "Bàba zài jiā lǐ.", exampleEn: "Dad is at home.", exampleFr: "Papa est à la maison." },
+      { id: 141, hanzi: "再见", pinyin: "zàijiàn", en: "goodbye", fr: "au revoir", category: "verbs", exampleHanzi: "老师，再见！", examplePinyin: "Lǎoshī, zàijiàn!", exampleEn: "Goodbye, Teacher!", exampleFr: "Au revoir, professeur !" },
+      { id: 142, hanzi: "怎么", pinyin: "zěnme", en: "how", fr: "comment", category: "people", exampleHanzi: "这个汉字怎么读？", examplePinyin: "Zhège Hànzì zěnme dú?", exampleEn: "How do you read this character?", exampleFr: "Comment lit-on ce caractère ?" },
+      { id: 143, hanzi: "怎么样", pinyin: "zěnmeyàng", en: "how about / how is it", fr: "comment est-ce / qu'en penses-tu", category: "people", exampleHanzi: "你的身体怎么样？", examplePinyin: "Nǐ de shēntǐ zěnmeyàng?", exampleEn: "How is your health?", exampleFr: "Comment va ta santé ?" },
+      { id: 144, hanzi: "这", pinyin: "zhè", en: "this", fr: "ceci / ce... ci", category: "people", exampleHanzi: "这是我的老师。", examplePinyin: "Zhè shì wǒ de lǎoshī.", exampleEn: "This is my teacher.", exampleFr: "Voici mon professeur." },
+      { id: 145, hanzi: "这儿", pinyin: "zhèr", en: "here", fr: "ici", category: "nouns", exampleHanzi: "请坐这儿。", examplePinyin: "Qǐng zuò zhèr.", exampleEn: "Please sit here.", exampleFr: "Asseyez-vous ici s'il vous plaît." },
+      { id: 146, hanzi: "中国", pinyin: "Zhōngguó", en: "China", fr: "Chine", category: "nouns", exampleHanzi: "我喜欢中国文化。", examplePinyin: "Wǒ xǐhuan Zhōngguó wénhuà.", exampleEn: "I like Chinese culture.", exampleFr: "J'aime la culture chinoise." },
+      { id: 147, hanzi: "中午", pinyin: "zhōngwǔ", en: "noon", fr: "midi", category: "numbers", exampleHanzi: "中午我们一起吃饭吧。", examplePinyin: "Zhōngwǔ wǒmen yīqǐ chīfàn ba.", exampleEn: "Let's eat lunch together at noon.", exampleFr: "Mangeons ensemble à midi." },
+      { id: 148, hanzi: "住", pinyin: "zhù", en: "to live / reside", fr: "habiter / vivre", category: "verbs", exampleHanzi: "你住在哪儿？", examplePinyin: "Nǐ zhù zài nǎr?", exampleEn: "Where do you live?", exampleFr: "Où habites-tu ?" },
+      { id: 149, hanzi: "桌子", pinyin: "zhuōzi", en: "table / desk", fr: "table / bureau", category: "nouns", exampleHanzi: "桌子上有一台电脑。", examplePinyin: "Zhuōzi shàng yǒu yī tái diànnǎo.", exampleEn: "There is a computer on the desk.", exampleFr: "Il y a un ordinateur sur le bureau." },
+      { id: 150, hanzi: "字", pinyin: "zì", en: "character / word", fr: "caractère / mot", category: "nouns", exampleHanzi: "这个字怎么写？", examplePinyin: "Zhège zì zěnme xiě?", exampleEn: "How do you write this character?", exampleFr: "Comment écrit-on ce caractère ?" },
+      { id: 151, hanzi: "昨天", pinyin: "zuótiān", en: "yesterday", fr: "hier", category: "numbers", exampleHanzi: "昨天下雨了。", examplePinyin: "Zuótiān xiàyǔ le.", exampleEn: "It rained yesterday.", exampleFr: "Il a plu hier." },
+      { id: 152, hanzi: "坐", pinyin: "zuò", en: "to sit / take (transport)", fr: "s'asseoir / prendre", category: "verbs", exampleHanzi: "我坐公共汽车去学校。", examplePinyin: "Wǒ zuò gōnggòng qìchē qù xuéxiào.", exampleEn: "I take the bus to school.", exampleFr: "Je prends le bus pour aller à l'école." },
+      { id: 153, hanzi: "做", pinyin: "zuò", en: "to do / make", fr: "faire / fabriquer", category: "verbs", exampleHanzi: "你周末喜欢做什么？", examplePinyin: "Nǐ zhōumò xǐhuan zuò shénme?", exampleEn: "What do you like doing on weekends?", exampleFr: "Qu'aimes-tu faire le week-end ?" }
     ];
 
-    const CATEGORIES = [
-      "All Words",
-      "Pronouns & People",
-      "Numbers & Time",
-      "Verbs",
-      "Nouns & Places",
-      "Adjectives & Particles"
-    ];
+    // Persistent State
+    const DEFAULT_SHORTCUTS = {
+      flip: { code: "Space", label: "Space" },
+      learning: { code: "Digit1", label: "1" },
+      mastered: { code: "Digit2", label: "2" },
+      kick: { code: "KeyX", label: "X" },
+      audio: { code: "KeyA", label: "A" }
+    };
 
-    const STORAGE_KEY_KICKED = "hsk1_kicked_word_ids_v1";
-
-    function loadSavedKickedIds() {
+    function safeLoadJSON(key, fallback) {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY_KICKED);
-        if (!raw) return new Set();
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          const validIds = new Set(HSK1_VOCABULARY.map(w => w.id));
-          return new Set(parsed.map(Number).filter(id => validIds.has(id)));
-        }
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
       } catch (e) {
-        // Ignore storage access errors
-      }
-      return new Set();
-    }
-
-    function saveKickedIds() {
-      try {
-        localStorage.setItem(STORAGE_KEY_KICKED, JSON.stringify([...kickedIds]));
-      } catch (e) {
-        // Ignore storage quota errors
+        return fallback;
       }
     }
 
-    let selectedCategory = "All Words";
-    let studyMode = "hanzi"; // 'hanzi' | 'pinyin' | 'english'
+    let kickedIds = new Set(safeLoadJSON("hsk1_kicked_v2", []));
+    let masteredIds = new Set(safeLoadJSON("hsk1_mastered_v2", []));
+    let prefs = safeLoadJSON("hsk1_prefs_v2", { lang: "en", theme: "light", mode: "hanzi" });
+    let shortcuts = safeLoadJSON("hsk1_shortcuts_v2", JSON.parse(JSON.stringify(DEFAULT_SHORTCUTS)));
+
+    let selectedCategory = "all";
+    let activeLibTab = "all";
+    let rebindingAction = null;
     let studyQueue = [];
-    let masteredIds = new Set();
-    let reviewAgainIds = new Set();
-    let kickedIds = loadSavedKickedIds();
     let isFlipped = false;
-    let streak = 0;
-    let totalInCategory = 0;
-    let activeLibraryTab = "all";
-    let librarySearchQuery = "";
-    let toastTimeout = null;
+    let sessionInitialCount = 0;
+    let sessionCompletedCount = 0;
 
-    function shuffleArray(array) {
-      const copy = [...array];
-      for (let i = copy.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copy[i], copy[j]] = [copy[j], copy[i]];
+    // UI Strings Dictionary
+    const I18N = {
+      en: {
+        homeTitle: "Mandarin Active Recall",
+        homeSubtitle: "Configure your language, theme, prompt mode, and shortcuts before starting.",
+        lblLang: "1. Translation Language",
+        lblTheme: "2. Visual Style",
+        lblMode: "3. Card Front Prompt",
+        lblKicked: "4. Import Kicked Words (Optional)",
+        lblShortcuts: "5. Keyboard Shortcuts (Click key to change)",
+        btnHomeLib: "Word Library",
+        btnStartStudy: "Start Studying",
+        navHome: "Home",
+        navLib: "Library",
+        navShuffle: "Shuffle",
+        cats: {
+          all: "All Words",
+          people: "Pronouns & People",
+          numbers: "Numbers & Time",
+          verbs: "Verbs",
+          nouns: "Nouns & Places",
+          particles: "Adjectives & Particles"
+        },
+        remaining: "Remaining",
+        mastered: "Mastered",
+        kicked: "Kicked",
+        frontHint: "Tap card or press key to reveal",
+        backHint: "Rate how well you recalled this word",
+        listenWord: "Word",
+        listenEx: "Sentence",
+        reveal: "Reveal Answer",
+        learning: "Still Learning",
+        kick: "Kick",
+        sessionDoneTitle: "Deck Completed!",
+        sessionDoneSub: "You mastered every active word in this category.",
+        studyAgainBtn: "Shuffle & Study Again",
+        shortcutNames: {
+          flip: "Flip / Reveal Card",
+          learning: "Still Learning",
+          mastered: "Mark Mastered",
+          kick: "Kick Card",
+          audio: "Play Audio"
+        },
+        pressKey: "Press key...",
+        statusActive: "Active",
+        statusMastered: "Mastered",
+        statusKicked: "Kicked",
+        btnRestore: "Restore",
+        btnStudyAgain: "Study Again"
+      },
+      fr: {
+        homeTitle: "Cartes Mémoires HSK 1",
+        homeSubtitle: "Choisissez votre langue, thème, mode d'affichage et raccourcis avant de commencer.",
+        lblLang: "1. Langue de traduction",
+        lblTheme: "2. Style visuel",
+        lblMode: "3. Affichage au recto",
+        lblKicked: "4. Importer les mots exclus (Optionnel)",
+        lblShortcuts: "5. Raccourcis clavier (Cliquez pour modifier)",
+        btnHomeLib: "Bibliothèque",
+        btnStartStudy: "Commencer",
+        navHome: "Accueil",
+        navLib: "Bibliothèque",
+        navShuffle: "Mélanger",
+        cats: {
+          all: "Tous",
+          people: "Pronoms & Personnes",
+          numbers: "Nombres & Temps",
+          verbs: "Verbes",
+          nouns: "Noms & Lieux",
+          particles: "Adjectifs & Particules"
+        },
+        remaining: "Restants",
+        mastered: "Maîtrisés",
+        kicked: "Exclus",
+        frontHint: "Cliquez sur la carte pour révéler",
+        backHint: "Évaluez votre mémorisation",
+        listenWord: "Mot",
+        listenEx: "Phrase",
+        reveal: "Révéler la réponse",
+        learning: "À revoir",
+        kick: "Exclure",
+        sessionDoneTitle: "Session terminée !",
+        sessionDoneSub: "Vous avez maîtrisé tous les mots actifs de cette catégorie.",
+        studyAgainBtn: "Mélanger et recommencer",
+        shortcutNames: {
+          flip: "Retourner la carte",
+          learning: "À revoir",
+          mastered: "Maîtrisé",
+          kick: "Exclure le mot",
+          audio: "Écouter l'audio"
+        },
+        pressKey: "Appuyez...",
+        statusActive: "Actif",
+        statusMastered: "Maîtrisé",
+        statusKicked: "Exclu",
+        btnRestore: "Restaurer",
+        btnStudyAgain: "Réétudier"
       }
-      return copy;
+    };
+
+    function t(key) {
+      return I18N[prefs.lang][key] || I18N.en[key] || key;
     }
 
-    function showToast(message) {
-      const toastMsgEl = document.getElementById("toast-msg");
-      if (!toastMsgEl) return;
-      toastMsgEl.textContent = message;
-      toastMsgEl.classList.remove("hidden");
-      clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => {
-        toastMsgEl.classList.add("hidden");
-      }, 2200);
+    function saveState() {
+      try {
+        localStorage.setItem("hsk1_kicked_v2", JSON.stringify(Array.from(kickedIds)));
+        localStorage.setItem("hsk1_mastered_v2", JSON.stringify(Array.from(masteredIds)));
+        localStorage.setItem("hsk1_prefs_v2", JSON.stringify(prefs));
+        localStorage.setItem("hsk1_shortcuts_v2", JSON.stringify(shortcuts));
+      } catch (e) {}
     }
 
-    function speakMandarin(text, btnElement = null) {
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById("toast-msg");
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.remove("hidden");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.add("hidden"), 2200);
+    }
+
+    function speakMandarin(text) {
       if (!("speechSynthesis" in window)) {
-        showToast("Audio playback not supported.");
+        showToast("Speech synthesis not supported in this browser.");
         return;
       }
-      try {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "zh-CN";
-        utterance.rate = 0.88;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "zh-CN";
+      utter.rate = 0.9;
+      window.speechSynthesis.speak(utter);
+    }
 
-        if (btnElement) {
-          btnElement.classList.add("audio-speaking");
-          utterance.onend = () => btnElement.classList.remove("audio-speaking");
-          utterance.onerror = () => btnElement.classList.remove("audio-speaking");
-        }
-        window.speechSynthesis.speak(utterance);
-      } catch (err) {
-        showToast("Unable to play audio.");
+    function styleOptionButton(btn, active) {
+      if (!btn) return;
+      if (active) {
+        btn.classList.add("bg-rose-600", "text-white", "border-rose-600", "shadow-sm");
+        btn.classList.remove("theme-card");
+      } else {
+        btn.classList.remove("bg-rose-600", "text-white", "border-rose-600", "shadow-sm");
+        btn.classList.add("theme-card");
       }
     }
 
-    function renderCategoryPills() {
-      const categoryFiltersEl = document.getElementById("category-filters");
-      if (!categoryFiltersEl) return;
-      categoryFiltersEl.innerHTML = "";
-      CATEGORIES.forEach(cat => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        const isActive = cat === selectedCategory;
-        btn.className = isActive
-          ? "px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white shadow-xs whitespace-nowrap transition"
-          : "px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 border border-slate-200/85 hover:border-slate-300 hover:text-slate-900 whitespace-nowrap transition";
-        btn.textContent = cat;
-        btn.addEventListener("click", () => {
-          selectedCategory = cat;
-          initDeck(false);
+    function syncPreferencesUI() {
+      document.body.className = "theme-" + prefs.theme + " theme-main h-full flex flex-col antialiased transition-colors duration-200";
+      document.getElementById("study-theme-btn").textContent = prefs.theme === "dark" ? "☀️" : "🌙";
+      document.getElementById("study-lang-btn").textContent = prefs.lang.toUpperCase();
+
+      styleOptionButton(document.getElementById("home-lang-en"), prefs.lang === "en");
+      styleOptionButton(document.getElementById("home-lang-fr"), prefs.lang === "fr");
+      styleOptionButton(document.getElementById("home-theme-light"), prefs.theme === "light");
+      styleOptionButton(document.getElementById("home-theme-dark"), prefs.theme === "dark");
+      styleOptionButton(document.getElementById("home-mode-hanzi"), prefs.mode === "hanzi");
+      styleOptionButton(document.getElementById("home-mode-pinyin"), prefs.mode === "pinyin");
+      styleOptionButton(document.getElementById("home-mode-trans"), prefs.mode === "trans");
+
+      // Translate static labels
+      document.getElementById("home-title").textContent = t("homeTitle");
+      document.getElementById("home-subtitle").textContent = t("homeSubtitle");
+      document.getElementById("lbl-lang").textContent = t("lblLang");
+      document.getElementById("lbl-theme").textContent = t("lblTheme");
+      document.getElementById("lbl-mode").textContent = t("lblMode");
+      document.getElementById("lbl-kicked").textContent = t("lblKicked");
+      document.getElementById("lbl-shortcuts").textContent = t("lblShortcuts");
+      document.getElementById("btn-home-lib").textContent = t("btnHomeLib");
+      document.getElementById("btn-start-study").textContent = t("btnStartStudy");
+      document.getElementById("nav-home-lbl").textContent = t("navHome");
+      document.getElementById("nav-lib-lbl").textContent = t("navLib");
+      document.getElementById("nav-reset-lbl").textContent = t("navShuffle");
+      document.getElementById("front-hint-text").textContent = t("frontHint");
+      document.getElementById("back-hint-text").textContent = t("backHint");
+      document.getElementById("lbl-listen-word").textContent = t("listenWord");
+      document.getElementById("lbl-listen-ex").textContent = t("listenEx");
+      document.querySelectorAll(".lbl-kick-short").forEach(el => { el.textContent = t("kick"); });
+
+      document.getElementById("home-kick-badge").textContent = kickedIds.size + " " + t("kicked").toLowerCase();
+      updateActionButtonLabels();
+      renderShortcutEditors();
+      renderCategoryPills();
+    }
+
+    function updateActionButtonLabels() {
+      document.getElementById("reveal-btn").textContent = t("reveal") + " [" + shortcuts.flip.label + "]";
+      document.getElementById("kick-front-btn").textContent = "🚫 " + t("kick") + " [" + shortcuts.kick.label + "]";
+      document.getElementById("learning-btn").textContent = t("learning") + " [" + shortcuts.learning.label + "]";
+      document.getElementById("mastered-btn").textContent = t("mastered") + " [" + shortcuts.mastered.label + "]";
+      document.getElementById("kick-back-btn").textContent = "🚫 " + t("kick") + " [" + shortcuts.kick.label + "]";
+    }
+
+    function renderShortcutEditors() {
+      const containers = [
+        document.getElementById("home-shortcuts-list"),
+        document.getElementById("settings-shortcuts-list")
+      ];
+      const actions = ["flip", "learning", "mastered", "kick", "audio"];
+
+      containers.forEach(container => {
+        if (!container) return;
+        container.innerHTML = "";
+        actions.forEach(action => {
+          const row = document.createElement("div");
+          row.className = "theme-card border rounded-xl px-3 py-2 flex items-center justify-between text-xs";
+
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "font-medium";
+          nameSpan.textContent = I18N[prefs.lang].shortcutNames[action];
+
+          const keyBtn = document.createElement("button");
+          keyBtn.type = "button";
+          const isRecording = rebindingAction === action;
+          keyBtn.className = isRecording
+            ? "px-3 py-1 rounded-lg bg-rose-600 text-white font-bold animate-pulse"
+            : "px-3 py-1 rounded-lg theme-subtle border font-bold hover:border-rose-500 transition";
+          keyBtn.textContent = isRecording ? t("pressKey") : shortcuts[action].label;
+
+          keyBtn.addEventListener("click", () => {
+            rebindingAction = rebindingAction === action ? null : action;
+            renderShortcutEditors();
+          });
+
+          row.appendChild(nameSpan);
+          row.appendChild(keyBtn);
+          container.appendChild(row);
         });
-        categoryFiltersEl.appendChild(btn);
       });
     }
 
-    function initDeck(resetProgress = false) {
-      if (resetProgress) {
-        masteredIds.clear();
-        reviewAgainIds.clear();
+    function formatKeyLabel(e) {
+      if (e.code === "Space") return "Space";
+      if (e.key === "ArrowLeft") return "←";
+      if (e.key === "ArrowRight") return "→";
+      if (e.key === "ArrowUp") return "↑";
+      if (e.key === "ArrowDown") return "↓";
+      if (e.key && e.key.length === 1) return e.key.toUpperCase();
+      return e.code;
+    }
+
+    function parseAndImportKicked(rawText) {
+      const trimmed = (rawText || "").trim();
+      if (!trimmed) return 0;
+      let tokens = [];
+
+      if (trimmed.startsWith("[")) {
+        try {
+          const arr = JSON.parse(trimmed);
+          if (Array.isArray(arr)) tokens = arr.map(v => String(v).trim());
+        } catch (e) {
+          tokens = trimmed.replace(/[\[\]"']/g, " ").split(/[\s,;]+/);
+        }
+      } else {
+        tokens = trimmed.split(/[\s,;]+/);
       }
 
-      const categoryWords = selectedCategory === "All Words"
-        ? HSK1_VOCABULARY
-        : HSK1_VOCABULARY.filter(w => w.category === selectedCategory);
+      let addedCount = 0;
+      tokens.forEach(tok => {
+        if (!tok) return;
+        const clean = tok.replace(/^["']|["']$/g, "").trim();
+        const found = HSK1_WORDS.find(w => w.hanzi === clean || String(w.id) === clean);
+        if (found && !kickedIds.has(found.id)) {
+          kickedIds.add(found.id);
+          addedCount++;
+        }
+      });
 
-      totalInCategory = categoryWords.length;
+      saveState();
+      syncPreferencesUI();
+      return addedCount;
+    }
 
-      const activeWords = categoryWords.filter(
-        w => !kickedIds.has(w.id) && !masteredIds.has(w.id)
-      );
+    // ==================== STUDY DECK LOGIC ====================
+    function buildStudyDeck() {
+      const filtered = HSK1_WORDS.filter(w => {
+        if (kickedIds.has(w.id)) return false;
+        if (selectedCategory !== "all" && w.category !== selectedCategory) return false;
+        return true;
+      });
 
-      studyQueue = shuffleArray(activeWords);
+      // Fisher-Yates shuffle
+      for (let i = filtered.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = filtered[i];
+        filtered[i] = filtered[j];
+        filtered[j] = temp;
+      }
+
+      studyQueue = filtered;
+      sessionInitialCount = studyQueue.length;
+      sessionCompletedCount = 0;
       isFlipped = false;
-
-      renderCategoryPills();
-      updateStudyModeUI();
-      updateStatsUI();
       renderCurrentCard();
     }
 
-    function updateStudyModeUI() {
-      const modeHanziBtn = document.getElementById("mode-hanzi-btn");
-      const modePinyinBtn = document.getElementById("mode-pinyin-btn");
-      const modeEnglishBtn = document.getElementById("mode-english-btn");
-      const modeSubtitleEl = document.getElementById("mode-subtitle");
+    function renderCategoryPills() {
+      const container = document.getElementById("category-pills");
+      if (!container) return;
+      container.innerHTML = "";
+      const cats = ["all", "people", "numbers", "verbs", "nouns", "particles"];
 
-      const modeButtons = [
-        { el: modeHanziBtn, mode: "hanzi" },
-        { el: modePinyinBtn, mode: "pinyin" },
-        { el: modeEnglishBtn, mode: "english" }
-      ];
-
-      modeButtons.forEach(mb => {
-        if (!mb.el) return;
-        if (mb.mode === studyMode) {
-          mb.el.className = "px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-900 shadow-xs transition";
-        } else {
-          mb.el.className = "px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 transition";
-        }
+      cats.forEach(cat => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        const active = selectedCategory === cat;
+        btn.className = active
+          ? "px-3.5 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-bold shrink-0 shadow-xs"
+          : "px-3.5 py-1.5 rounded-xl theme-subtle border text-xs font-semibold shrink-0 hover:border-rose-500 transition";
+        btn.textContent = I18N[prefs.lang].cats[cat];
+        btn.addEventListener("click", () => {
+          selectedCategory = cat;
+          renderCategoryPills();
+          buildStudyDeck();
+        });
+        container.appendChild(btn);
       });
+    }
 
-      if (modeSubtitleEl) {
-        if (studyMode === "hanzi") {
-          modeSubtitleEl.textContent = "150 Core Words • Hanzi Mode";
-        } else if (studyMode === "pinyin") {
-          modeSubtitleEl.textContent = "150 Core Words • Pinyin Mode";
-        } else {
-          modeSubtitleEl.textContent = "150 Core Words • English Mode";
-        }
-      }
+    function updateStatsUI() {
+      document.getElementById("stat-remaining").textContent = t("remaining") + ": " + studyQueue.length;
+      document.getElementById("stat-mastered").textContent = t("mastered") + ": " + masteredIds.size;
+      document.getElementById("stat-kicked").textContent = t("kicked") + ": " + kickedIds.size;
+
+      const pct = sessionInitialCount > 0
+        ? Math.min(100, Math.round((sessionCompletedCount / sessionInitialCount) * 100))
+        : 100;
+      document.getElementById("progress-bar-fill").style.width = pct + "%";
     }
 
     function renderCurrentCard() {
-      const cardWrapper = document.getElementById("card-wrapper");
-      const controlsAreaEl = document.getElementById("controls-area");
-      const queueIndicatorEl = document.getElementById("queue-indicator");
-      const completeScreenEl = document.getElementById("complete-screen");
-      const completedTotalEl = document.getElementById("completed-total");
-      const flashcardInner = document.getElementById("flashcard-inner");
-      const revealControls = document.getElementById("reveal-controls");
-      const ratingControls = document.getElementById("rating-controls");
-      const queueRemainingTextEl = document.getElementById("queue-remaining-text");
-      const reviewBadgeEl = document.getElementById("review-badge");
-      const frontPromptTagEl = document.getElementById("front-prompt-tag");
-      const frontDisplayEl = document.getElementById("front-display");
-      const frontInstructionEl = document.getElementById("front-instruction");
-      const backCategoryEl = document.getElementById("back-category");
-      const backHanziEl = document.getElementById("back-hanzi");
-      const backPinyinEl = document.getElementById("back-pinyin");
-      const backEnglishEl = document.getElementById("back-english");
-      const backExZhEl = document.getElementById("back-ex-zh");
-      const backExPyEl = document.getElementById("back-ex-py");
-      const backExEnEl = document.getElementById("back-ex-en");
+      updateStatsUI();
+      const inner = document.getElementById("flashcard-inner");
+      const frontBox = document.getElementById("front-prompt-box");
+      const frontControls = document.getElementById("front-controls");
+      const backControls = document.getElementById("back-controls");
+
+      isFlipped = false;
+      inner.style.transform = "rotateY(0deg)";
 
       if (studyQueue.length === 0) {
-        if (cardWrapper) cardWrapper.classList.add("hidden");
-        if (controlsAreaEl) controlsAreaEl.classList.add("hidden");
-        if (queueIndicatorEl) queueIndicatorEl.classList.add("hidden");
-        if (completeScreenEl) completeScreenEl.classList.remove("hidden");
-        const activeTotal = Math.max(0, totalInCategory - kickedIds.size);
-        if (completedTotalEl) completedTotalEl.textContent = activeTotal;
+        frontBox.innerHTML = "";
+        const title = document.createElement("div");
+        title.className = "text-2xl font-extrabold mb-2";
+        title.textContent = t("sessionDoneTitle");
+
+        const sub = document.createElement("p");
+        sub.className = "text-xs theme-text-sec mb-4";
+        sub.textContent = t("sessionDoneSub");
+
+        const againBtn = document.createElement("button");
+        againBtn.type = "button";
+        againBtn.className = "px-5 py-2.5 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition";
+        againBtn.textContent = t("studyAgainBtn");
+        againBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          buildStudyDeck();
+        });
+
+        frontBox.appendChild(title);
+        frontBox.appendChild(sub);
+        frontBox.appendChild(againBtn);
+
+        document.getElementById("card-badge-front").textContent = "✓";
+        frontControls.classList.add("hidden");
+        backControls.classList.add("hidden");
         return;
       }
 
-      if (cardWrapper) cardWrapper.classList.remove("hidden");
-      if (controlsAreaEl) controlsAreaEl.classList.remove("hidden");
-      if (queueIndicatorEl) queueIndicatorEl.classList.remove("hidden");
-      if (completeScreenEl) completeScreenEl.classList.add("hidden");
+      frontControls.classList.remove("hidden");
+      backControls.classList.add("hidden");
 
-      isFlipped = false;
-      if (flashcardInner) flashcardInner.classList.remove("rotate-y-180");
-      if (revealControls) revealControls.classList.remove("hidden");
-      if (ratingControls) ratingControls.classList.add("hidden");
+      const word = studyQueue[0];
+      document.getElementById("card-badge-front").textContent = "#" + word.id;
+      document.getElementById("card-badge-back").textContent = "#" + word.id;
 
-      const currentWord = studyQueue[0];
-
-      if (queueRemainingTextEl) queueRemainingTextEl.textContent = `Remaining in queue: ${studyQueue.length}`;
-      if (reviewBadgeEl) {
-        if (reviewAgainIds.has(currentWord.id)) {
-          reviewBadgeEl.classList.remove("hidden");
-        } else {
-          reviewBadgeEl.classList.add("hidden");
-        }
-      }
-
-      if (studyMode === "hanzi") {
-        if (frontPromptTagEl) frontPromptTagEl.textContent = "Guess Pinyin & Meaning";
-        if (frontDisplayEl) {
-          frontDisplayEl.textContent = currentWord.hanzi;
-          frontDisplayEl.className = "hanzi-font text-7xl sm:text-8xl md:text-9xl font-bold text-slate-900 tracking-wide text-center leading-tight";
-        }
-        if (frontInstructionEl) frontInstructionEl.textContent = "Recall the Pinyin & Meaning, then tap or press Space";
-      } else if (studyMode === "pinyin") {
-        if (frontPromptTagEl) frontPromptTagEl.textContent = "Guess Hanzi & Meaning";
-        if (frontDisplayEl) {
-          frontDisplayEl.textContent = currentWord.pinyin;
-          frontDisplayEl.className = "text-4xl sm:text-5xl md:text-6xl font-bold text-rose-600 tracking-wide text-center leading-tight";
-        }
-        if (frontInstructionEl) frontInstructionEl.textContent = "Recall the Hanzi & English meaning, then tap or press Space";
+      // Render Front Prompt based on mode
+      frontBox.innerHTML = "";
+      const promptEl = document.createElement("div");
+      if (prefs.mode === "hanzi") {
+        promptEl.className = "text-6xl sm:text-7xl font-extrabold tracking-wide";
+        promptEl.textContent = word.hanzi;
+      } else if (prefs.mode === "pinyin") {
+        promptEl.className = "text-3xl sm:text-4xl font-extrabold text-rose-500";
+        promptEl.textContent = word.pinyin;
       } else {
-        if (frontPromptTagEl) frontPromptTagEl.textContent = "Guess Hanzi & Pinyin";
-        if (frontDisplayEl) {
-          frontDisplayEl.textContent = currentWord.english;
-          frontDisplayEl.className = "text-2xl sm:text-3xl md:text-4xl font-semibold text-slate-800 tracking-tight text-center leading-snug px-4";
-        }
-        if (frontInstructionEl) frontInstructionEl.textContent = "Recall the Chinese Hanzi & Pinyin, then tap or press Space";
+        promptEl.className = "text-2xl sm:text-3xl font-bold leading-snug";
+        promptEl.textContent = prefs.lang === "fr" ? word.fr : word.en;
       }
+      frontBox.appendChild(promptEl);
 
-      if (backCategoryEl) backCategoryEl.textContent = currentWord.category;
-      if (backHanziEl) backHanziEl.textContent = currentWord.hanzi;
-      if (backPinyinEl) backPinyinEl.textContent = currentWord.pinyin;
-      if (backEnglishEl) backEnglishEl.textContent = currentWord.english;
-      if (backExZhEl) backExZhEl.textContent = currentWord.exZh;
-      if (backExPyEl) backExPyEl.textContent = currentWord.exPy;
-      if (backExEnEl) backExEnEl.textContent = currentWord.exEn;
+      // Populate Back Details
+      document.getElementById("back-hanzi").textContent = word.hanzi;
+      document.getElementById("back-pinyin").textContent = word.pinyin;
+      document.getElementById("back-translation").textContent = prefs.lang === "fr" ? word.fr : word.en;
+      document.getElementById("back-ex-hanzi").textContent = word.exampleHanzi;
+      document.getElementById("back-ex-pinyin").textContent = word.examplePinyin;
+      document.getElementById("back-ex-trans").textContent = prefs.lang === "fr" ? word.exampleFr : word.exampleEn;
     }
 
     function flipCard() {
       if (studyQueue.length === 0) return;
       isFlipped = !isFlipped;
-      const flashcardInner = document.getElementById("flashcard-inner");
-      const revealControls = document.getElementById("reveal-controls");
-      const ratingControls = document.getElementById("rating-controls");
-
-      if (isFlipped) {
-        if (flashcardInner) flashcardInner.classList.add("rotate-y-180");
-        if (revealControls) revealControls.classList.add("hidden");
-        if (ratingControls) ratingControls.classList.remove("hidden");
-      } else {
-        if (flashcardInner) flashcardInner.classList.remove("rotate-y-180");
-        if (revealControls) revealControls.classList.remove("hidden");
-        if (ratingControls) ratingControls.classList.add("hidden");
-      }
+      document.getElementById("flashcard-inner").style.transform = isFlipped ? "rotateY(180deg)" : "rotateY(0deg)";
+      document.getElementById("front-controls").classList.toggle("hidden", isFlipped);
+      document.getElementById("back-controls").classList.toggle("hidden", !isFlipped);
     }
 
     function handleStillLearning() {
-      if (studyQueue.length === 0 || !isFlipped) return;
-      const currentWord = studyQueue.shift();
-      reviewAgainIds.add(currentWord.id);
-      streak = 0;
-
-      const minIndex = studyQueue.length > 2 ? 2 : studyQueue.length;
-      const randomIndex = minIndex + Math.floor(Math.random() * (studyQueue.length - minIndex + 1));
-      studyQueue.splice(randomIndex, 0, currentWord);
-
-      updateStatsUI();
+      if (studyQueue.length === 0) return;
+      const word = studyQueue.shift();
+      // Insert randomly anywhere after index 0 so it does not repeat immediately
+      const minIdx = Math.min(2, studyQueue.length);
+      const insertIdx = minIdx + Math.floor(Math.random() * (studyQueue.length - minIdx + 1));
+      studyQueue.splice(insertIdx, 0, word);
       renderCurrentCard();
-      showToast("Mixed randomly back into deck");
     }
 
     function handleMastered() {
-      if (studyQueue.length === 0 || !isFlipped) return;
-      const currentWord = studyQueue.shift();
-      masteredIds.add(currentWord.id);
-      reviewAgainIds.delete(currentWord.id);
-      streak += 1;
-
-      updateStatsUI();
-      renderCurrentCard();
-    }
-
-    function handleKickCard() {
       if (studyQueue.length === 0) return;
-      const currentWord = studyQueue.shift();
-      kickedIds.add(currentWord.id);
-      reviewAgainIds.delete(currentWord.id);
-      masteredIds.delete(currentWord.id);
-      saveKickedIds();
-
-      updateStatsUI();
+      const word = studyQueue.shift();
+      masteredIds.add(word.id);
+      sessionCompletedCount++;
+      saveState();
       renderCurrentCard();
-      showToast(`Kicked "${currentWord.hanzi}" (saved)`);
     }
 
-    function updateStatsUI() {
-      const categoryWords = selectedCategory === "All Words"
-        ? HSK1_VOCABULARY
-        : HSK1_VOCABULARY.filter(w => w.category === selectedCategory);
+    function handleKickCurrent() {
+      if (studyQueue.length === 0) return;
+      const word = studyQueue.shift();
+      kickedIds.add(word.id);
+      sessionInitialCount = Math.max(0, sessionInitialCount - 1);
+      saveState();
+      syncPreferencesUI();
+      showToast(t("kicked") + ": " + word.hanzi);
+      renderCurrentCard();
+    }
 
-      const categoryWordIds = new Set(categoryWords.map(w => w.id));
-      const masteredInCat = [...masteredIds].filter(id => categoryWordIds.has(id)).length;
-      const kickedInCat = [...kickedIds].filter(id => categoryWordIds.has(id)).length;
-      const activeTotal = Math.max(0, totalInCategory - kickedInCat);
+    // ==================== WORD LIBRARY MODAL ====================
+    function openLibraryModal(tab) {
+      activeLibTab = tab || "all";
+      document.getElementById("library-modal").classList.remove("hidden");
+      renderLibraryModal();
+    }
 
-      const masteredCountEl = document.getElementById("mastered-count");
-      const totalCountEl = document.getElementById("total-count");
-      const streakCountEl = document.getElementById("streak-count");
-      const kickedBadgeEl = document.getElementById("kicked-badge");
-      const kickedCountEl = document.getElementById("kicked-count");
-      const progressBarEl = document.getElementById("progress-bar");
+    function renderLibraryModal() {
+      // Update tab button styles
+      document.querySelectorAll(".lib-tab-btn").forEach(btn => {
+        const isTab = btn.getAttribute("data-tab") === activeLibTab;
+        if (isTab) {
+          btn.classList.add("bg-rose-600", "text-white", "border-rose-600");
+          btn.classList.remove("theme-card");
+        } else {
+          btn.classList.remove("bg-rose-600", "text-white", "border-rose-600");
+          btn.classList.add("theme-card");
+        }
+      });
 
-      if (masteredCountEl) masteredCountEl.textContent = masteredInCat;
-      if (totalCountEl) totalCountEl.textContent = `/${activeTotal}`;
-      if (streakCountEl) streakCountEl.textContent = streak;
+      const listEl = document.getElementById("lib-word-list");
+      const ioPanel = document.getElementById("lib-io-panel");
+      const masteredBar = document.getElementById("lib-mastered-bar");
 
-      if (kickedIds.size > 0) {
-        if (kickedBadgeEl) kickedBadgeEl.classList.remove("hidden");
-        if (kickedCountEl) kickedCountEl.textContent = kickedIds.size;
-      } else {
-        if (kickedBadgeEl) kickedBadgeEl.classList.add("hidden");
+      if (activeLibTab === "io") {
+        listEl.classList.add("hidden");
+        masteredBar.classList.add("hidden");
+        ioPanel.classList.remove("hidden");
+        const exportedHanzi = HSK1_WORDS.filter(w => kickedIds.has(w.id)).map(w => w.hanzi);
+        document.getElementById("io-export-box").value = JSON.stringify(exportedHanzi);
+        return;
       }
 
-      const pct = activeTotal > 0 ? Math.round((masteredInCat / activeTotal) * 100) : 100;
-      if (progressBarEl) progressBarEl.style.width = `${pct}%`;
-    }
+      ioPanel.classList.add("hidden");
+      listEl.classList.remove("hidden");
+      masteredBar.classList.toggle("hidden", activeLibTab !== "mastered");
+      document.getElementById("lib-mastered-count").textContent = t("mastered") + ": " + masteredIds.size;
 
-    function openLibrary(defaultTab = "all") {
-      activeLibraryTab = defaultTab;
-      const libraryModal = document.getElementById("library-modal");
-      if (libraryModal) libraryModal.classList.remove("hidden");
-      renderLibrary();
-    }
-
-    function closeLibrary() {
-      const libraryModal = document.getElementById("library-modal");
-      if (libraryModal) libraryModal.classList.add("hidden");
-    }
-
-    function insertWordRandomlyIntoQueue(word) {
-      if (selectedCategory !== "All Words" && word.category !== selectedCategory) return;
-      if (studyQueue.some(w => w.id === word.id)) return;
-
-      if (studyQueue.length <= 1) {
-        studyQueue.push(word);
-      } else {
-        const pos = 1 + Math.floor(Math.random() * studyQueue.length);
-        studyQueue.splice(pos, 0, word);
-      }
-      const queueRemainingTextEl = document.getElementById("queue-remaining-text");
-      if (studyQueue.length === 1) {
-        renderCurrentCard();
-      } else if (queueRemainingTextEl) {
-        queueRemainingTextEl.textContent = `Remaining in queue: ${studyQueue.length}`;
-      }
-    }
-
-    function removeWordFromQueue(wordId) {
-      const wasFirst = studyQueue.length > 0 && studyQueue[0].id === wordId;
-      studyQueue = studyQueue.filter(w => w.id !== wordId);
-      const queueRemainingTextEl = document.getElementById("queue-remaining-text");
-      if (wasFirst || studyQueue.length === 0) {
-        renderCurrentCard();
-      } else if (queueRemainingTextEl) {
-        queueRemainingTextEl.textContent = `Remaining in queue: ${studyQueue.length}`;
-      }
-    }
-
-    function toggleKickFromLibrary(word) {
-      if (kickedIds.has(word.id)) {
-        kickedIds.delete(word.id);
-        saveKickedIds();
-        insertWordRandomlyIntoQueue(word);
-        showToast(`Restored "${word.hanzi}"`);
-      } else {
-        kickedIds.add(word.id);
-        masteredIds.delete(word.id);
-        reviewAgainIds.delete(word.id);
-        saveKickedIds();
-        removeWordFromQueue(word.id);
-        showToast(`Kicked "${word.hanzi}" (saved)`);
-      }
-      updateStatsUI();
-      renderLibrary();
-    }
-
-    function restudyMasteredWord(word) {
-      masteredIds.delete(word.id);
-      kickedIds.delete(word.id);
-      saveKickedIds();
-      insertWordRandomlyIntoQueue(word);
-      updateStatsUI();
-      renderLibrary();
-      showToast(`Added "${word.hanzi}" back to study queue`);
-    }
-
-    function copyTextToClipboard(text) {
-      try {
-        const tempInput = document.createElement("textarea");
-        tempInput.value = text;
-        tempInput.style.position = "fixed";
-        tempInput.style.opacity = "0";
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        document.execCommand("copy");
-        document.body.removeChild(tempInput);
+      const query = (document.getElementById("lib-search-input").value || "").trim().toLowerCase();
+      const filtered = HSK1_WORDS.filter(w => {
+        if (activeLibTab === "active" && (kickedIds.has(w.id) || masteredIds.has(w.id))) return false;
+        if (activeLibTab === "mastered" && !masteredIds.has(w.id)) return false;
+        if (activeLibTab === "kicked" && !kickedIds.has(w.id)) return false;
+        if (query) {
+          const hay = (w.hanzi + " " + w.pinyin + " " + w.en + " " + w.fr).toLowerCase();
+          if (!hay.includes(query)) return false;
+        }
         return true;
-      } catch (e) {
-        return false;
-      }
-    }
-
-    function generateKickedExportCode() {
-      const kickedList = [...kickedIds].map(id => {
-        const word = HSK1_VOCABULARY.find(w => w.id === id);
-        return word ? word.hanzi : id;
-      });
-      return JSON.stringify(kickedList, null, 2);
-    }
-
-    function parseKickedImportCode(rawText) {
-      const trimmed = (rawText || "").trim();
-      if (!trimmed) return new Set();
-
-      const validIds = new Set(HSK1_VOCABULARY.map(w => w.id));
-      const hanziToId = new Map(HSK1_VOCABULARY.map(w => [w.hanzi, w.id]));
-      const extracted = new Set();
-
-      // Try parsing as JSON first (array of strings/numbers or objects)
-      try {
-        const parsed = JSON.parse(trimmed);
-        if (Array.isArray(parsed)) {
-          for (const item of parsed) {
-            if (typeof item === "number" && validIds.has(item)) {
-              extracted.add(item);
-            } else if (typeof item === "string") {
-              const cleanItem = item.trim();
-              if (hanziToId.has(cleanItem)) {
-                extracted.add(hanziToId.get(cleanItem));
-              } else {
-                const num = parseInt(cleanItem, 10);
-                if (!Number.isNaN(num) && validIds.has(num)) {
-                  extracted.add(num);
-                }
-              }
-            } else if (item && typeof item === "object" && item.id && validIds.has(Number(item.id))) {
-              extracted.add(Number(item.id));
-            }
-          }
-          return extracted;
-        }
-      } catch (e) {
-        // Not valid JSON, fallback to comma/space/newline token parsing
-      }
-
-      // Fallback delimiter splitting
-      const tokens = trimmed.split(/[\s,;|"'\n\r\t]+/).filter(Boolean);
-      for (const token of tokens) {
-        if (hanziToId.has(token)) {
-          extracted.add(hanziToId.get(token));
-        } else {
-          const num = parseInt(token, 10);
-          if (!Number.isNaN(num) && validIds.has(num)) {
-            extracted.add(num);
-          }
-        }
-      }
-
-      return extracted;
-    }
-
-    function handleExportKicked() {
-      const code = generateKickedExportCode();
-      const exportCodeOutput = document.getElementById("export-code-output");
-      const exportCodeBox = document.getElementById("export-code-box");
-      if (exportCodeOutput) exportCodeOutput.value = code;
-      if (exportCodeBox) exportCodeBox.classList.remove("hidden");
-      if (exportCodeOutput) {
-        exportCodeOutput.focus();
-        exportCodeOutput.select();
-      }
-      const copied = copyTextToClipboard(code);
-      showToast(copied ? `Exported JSON (${kickedIds.size} words)` : "JSON ready!");
-    }
-
-    function handleImportKicked() {
-      const importCodeInput = document.getElementById("import-code-input");
-      if (!importCodeInput) return;
-
-      const parsedSet = parseKickedImportCode(importCodeInput.value);
-      if (parsedSet.size === 0 && importCodeInput.value.trim() !== "") {
-        showToast("Could not recognize any valid words in paste.");
-        return;
-      }
-
-      kickedIds = parsedSet;
-      kickedIds.forEach(id => {
-        masteredIds.delete(id);
-        reviewAgainIds.delete(id);
-      });
-      saveKickedIds();
-
-      initDeck(false);
-      renderLibrary();
-      importCodeInput.value = "";
-      showToast(`Imported ${kickedIds.size} kicked word${kickedIds.size === 1 ? "" : "s"}!`);
-    }
-
-    function renderLibrary() {
-      const activeCount = HSK1_VOCABULARY.filter(w => !kickedIds.has(w.id) && !masteredIds.has(w.id)).length;
-      
-      const libCountAllEl = document.getElementById("lib-count-all");
-      const libCountActiveEl = document.getElementById("lib-count-active");
-      const libCountMasteredEl = document.getElementById("lib-count-mastered");
-      const libCountKickedEl = document.getElementById("lib-count-kicked");
-
-      if (libCountAllEl) libCountAllEl.textContent = HSK1_VOCABULARY.length;
-      if (libCountActiveEl) libCountActiveEl.textContent = activeCount;
-      if (libCountMasteredEl) libCountMasteredEl.textContent = masteredIds.size;
-      if (libCountKickedEl) libCountKickedEl.textContent = kickedIds.size;
-
-      const tabAllBtn = document.getElementById("tab-all");
-      const tabActiveBtn = document.getElementById("tab-active");
-      const tabMasteredBtn = document.getElementById("tab-mastered");
-      const tabKickedBtn = document.getElementById("tab-kicked");
-
-      const tabs = [
-        { el: tabAllBtn, key: "all" },
-        { el: tabActiveBtn, key: "active" },
-        { el: tabMasteredBtn, key: "mastered" },
-        { el: tabKickedBtn, key: "kicked" }
-      ];
-
-      tabs.forEach(t => {
-        if (!t.el) return;
-        if (t.key === activeLibraryTab) {
-          t.el.className = "px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-900 shadow-xs transition";
-        } else {
-          t.el.className = "px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition";
-        }
       });
 
-      const libraryBulkBar = document.getElementById("library-bulk-bar");
-      const bulkBarText = document.getElementById("bulk-bar-text");
-      const bulkActionBtn = document.getElementById("bulk-action-btn");
+      listEl.innerHTML = "";
+      filtered.forEach(w => {
+        const isKicked = kickedIds.has(w.id);
+        const isMastered = masteredIds.has(w.id);
 
-      if (activeLibraryTab === "mastered" && masteredIds.size > 0) {
-        if (libraryBulkBar) {
-          libraryBulkBar.classList.remove("hidden");
-          libraryBulkBar.className = "px-5 py-2.5 bg-emerald-50/80 border-b border-emerald-200/60 flex items-center justify-between gap-2";
-        }
-        if (bulkBarText) {
-          bulkBarText.className = "text-xs font-medium text-emerald-900";
-          bulkBarText.textContent = `You have ${masteredIds.size} mastered word${masteredIds.size === 1 ? "" : "s"}.`;
-        }
-        if (bulkActionBtn) {
-          bulkActionBtn.className = "px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shadow-xs";
-          bulkActionBtn.textContent = "Study All Mastered Again";
-          bulkActionBtn.onclick = () => {
-            const wordsToRestore = HSK1_VOCABULARY.filter(w => masteredIds.has(w.id));
-            masteredIds.clear();
-            wordsToRestore.forEach(w => insertWordRandomlyIntoQueue(w));
-            studyQueue = shuffleArray(studyQueue);
-            updateStatsUI();
-            renderCurrentCard();
-            renderLibrary();
-            showToast("All mastered words shuffled back in!");
-          };
-        }
-      } else if (activeLibraryTab === "kicked" && kickedIds.size > 0) {
-        if (libraryBulkBar) {
-          libraryBulkBar.classList.remove("hidden");
-          libraryBulkBar.className = "px-5 py-2.5 bg-slate-100 border-b border-slate-200/80 flex items-center justify-between gap-2";
-        }
-        if (bulkBarText) {
-          bulkBarText.className = "text-xs font-medium text-slate-700";
-          bulkBarText.textContent = `${kickedIds.size} word${kickedIds.size === 1 ? "" : "s"} currently kicked.`;
-        }
-        if (bulkActionBtn) {
-          bulkActionBtn.className = "px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold transition shadow-xs";
-          bulkActionBtn.textContent = "Restore All Kicked";
-          bulkActionBtn.onclick = () => {
-            const wordsToRestore = HSK1_VOCABULARY.filter(w => kickedIds.has(w.id));
-            kickedIds.clear();
-            saveKickedIds();
-            wordsToRestore.forEach(w => insertWordRandomlyIntoQueue(w));
-            studyQueue = shuffleArray(studyQueue);
-            updateStatsUI();
-            renderCurrentCard();
-            renderLibrary();
-            showToast("Restored all kicked words!");
-          };
-        }
-      } else {
-        if (libraryBulkBar) libraryBulkBar.classList.add("hidden");
-      }
-
-      const q = librarySearchQuery.trim().toLowerCase();
-      const filtered = HSK1_VOCABULARY.filter(w => {
-        if (activeLibraryTab === "active" && (kickedIds.has(w.id) || masteredIds.has(w.id))) return false;
-        if (activeLibraryTab === "mastered" && !masteredIds.has(w.id)) return false;
-        if (activeLibraryTab === "kicked" && !kickedIds.has(w.id)) return false;
-        if (!q) return true;
-        return (
-          w.hanzi.includes(q) ||
-          w.pinyin.toLowerCase().includes(q) ||
-          w.english.toLowerCase().includes(q) ||
-          w.category.toLowerCase().includes(q)
-        );
-      });
-
-      const libraryListEl = document.getElementById("library-list");
-      if (!libraryListEl) return;
-
-      if (filtered.length === 0) {
-        libraryListEl.innerHTML = `
-          <div class="py-12 text-center text-sm text-slate-400">
-            No words found in this view.
-          </div>
-        `;
-        return;
-      }
-
-      libraryListEl.innerHTML = "";
-      filtered.forEach(word => {
-        const isKicked = kickedIds.has(word.id);
-        const isMastered = masteredIds.has(word.id);
-
-        const row = document.createElement("div");
-        row.className = `py-2.5 px-2 flex items-center justify-between gap-3 rounded-xl transition ${
-          isKicked ? "opacity-60 bg-slate-50/70" : "hover:bg-slate-50"
-        }`;
-
-        const left = document.createElement("div");
-        left.className = "flex items-center gap-3 min-w-0";
-
-        const playBtn = document.createElement("button");
-        playBtn.type = "button";
-        playBtn.className = "w-8 h-8 rounded-full bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center shrink-0 transition";
-        playBtn.title = "Listen";
-        playBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>`;
-        playBtn.addEventListener("click", () => speakMandarin(word.hanzi));
+        const card = document.createElement("div");
+        card.className = "theme-subtle border rounded-2xl p-3 flex items-center justify-between gap-2 text-xs";
 
         const info = document.createElement("div");
         info.className = "min-w-0";
-        info.innerHTML = `
-          <div class="flex items-baseline gap-2 flex-wrap">
-            <span class="hanzi-font text-lg font-bold text-slate-900 ${isKicked ? "line-through text-slate-400" : ""}">${word.hanzi}</span>
-            <span class="text-xs font-semibold text-rose-600">${word.pinyin}</span>
-            ${isMastered ? '<span class="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">Mastered</span>' : ""}
-            ${isKicked ? '<span class="text-[10px] font-semibold bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">Kicked</span>' : ""}
-          </div>
-          <p class="text-xs text-slate-500 truncate">${word.english} <span class="text-slate-300">•</span> <span class="text-[11px] text-slate-400">${word.category}</span></p>
-        `;
 
-        left.appendChild(playBtn);
-        left.appendChild(info);
+        const topRow = document.createElement("div");
+        topRow.className = "flex items-center gap-2";
+
+        const hz = document.createElement("span");
+        hz.className = "text-base font-extrabold";
+        hz.textContent = w.hanzi;
+
+        const py = document.createElement("span");
+        py.className = "font-semibold text-rose-500";
+        py.textContent = w.pinyin;
+
+        const badge = document.createElement("span");
+        if (isKicked) {
+          badge.className = "px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-500 text-[10px] font-bold";
+          badge.textContent = t("statusKicked");
+        } else if (isMastered) {
+          badge.className = "px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 text-[10px] font-bold";
+          badge.textContent = t("statusMastered");
+        } else {
+          badge.className = "px-2 py-0.5 rounded-full bg-slate-500/15 theme-text-sec text-[10px] font-bold";
+          badge.textContent = t("statusActive");
+        }
+
+        topRow.appendChild(hz);
+        topRow.appendChild(py);
+        topRow.appendChild(badge);
+
+        const meaning = document.createElement("div");
+        meaning.className = "theme-text-sec truncate mt-0.5";
+        meaning.textContent = prefs.lang === "fr" ? w.fr : w.en;
+
+        info.appendChild(topRow);
+        info.appendChild(meaning);
 
         const actions = document.createElement("div");
         actions.className = "flex items-center gap-1.5 shrink-0";
 
-        if (isMastered) {
+        if (isMastered && !isKicked) {
           const restudyBtn = document.createElement("button");
           restudyBtn.type = "button";
-          restudyBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80 transition";
-          restudyBtn.textContent = "Study Again";
-          restudyBtn.addEventListener("click", () => restudyMasteredWord(word));
+          restudyBtn.className = "px-2.5 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-[11px] hover:bg-emerald-700 transition";
+          restudyBtn.textContent = t("btnStudyAgain");
+          restudyBtn.addEventListener("click", () => {
+            masteredIds.delete(w.id);
+            saveState();
+            renderLibraryModal();
+            updateStatsUI();
+          });
           actions.appendChild(restudyBtn);
         }
 
-        const kickToggleBtn = document.createElement("button");
-        kickToggleBtn.type = "button";
-        if (isKicked) {
-          kickToggleBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-white hover:bg-slate-900 transition";
-          kickToggleBtn.textContent = "Restore";
-        } else {
-          kickToggleBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white text-slate-600 hover:text-rose-600 hover:border-rose-200 border border-slate-200 transition";
-          kickToggleBtn.textContent = "Kick";
-        }
-        kickToggleBtn.addEventListener("click", () => toggleKickFromLibrary(word));
-        actions.appendChild(kickToggleBtn);
+        const kickBtn = document.createElement("button");
+        kickBtn.type = "button";
+        kickBtn.className = isKicked
+          ? "px-2.5 py-1.5 rounded-xl bg-rose-600 text-white font-bold text-[11px] hover:bg-rose-700 transition"
+          : "px-2.5 py-1.5 rounded-xl theme-card border font-bold text-[11px] hover:border-rose-500 hover:text-rose-500 transition";
+        kickBtn.textContent = isKicked ? t("btnRestore") : t("kick");
+        kickBtn.addEventListener("click", () => {
+          if (isKicked) {
+            kickedIds.delete(w.id);
+          } else {
+            kickedIds.add(w.id);
+          }
+          saveState();
+          syncPreferencesUI();
+          renderLibraryModal();
+        });
+        actions.appendChild(kickBtn);
 
-        row.appendChild(left);
-        row.appendChild(actions);
-        libraryListEl.appendChild(row);
+        card.appendChild(info);
+        card.appendChild(actions);
+        listEl.appendChild(card);
       });
     }
 
-    // Attach all event listeners safely on DOMContentLoaded
+    // ==================== INITIALIZATION & EVENT BINDINGS ====================
     document.addEventListener("DOMContentLoaded", () => {
-      const cardWrapper = document.getElementById("card-wrapper");
-      if (cardWrapper) {
-        cardWrapper.addEventListener("click", (e) => {
-          if (e.target.closest("button")) return;
-          flipCard();
-        });
-      }
+      syncPreferencesUI();
 
-      const modeHanziBtn = document.getElementById("mode-hanzi-btn");
-      const modePinyinBtn = document.getElementById("mode-pinyin-btn");
-      const modeEnglishBtn = document.getElementById("mode-english-btn");
+      // Home Language & Theme & Mode Buttons
+      document.getElementById("home-lang-en").addEventListener("click", () => {
+        prefs.lang = "en";
+        saveState();
+        syncPreferencesUI();
+      });
+      document.getElementById("home-lang-fr").addEventListener("click", () => {
+        prefs.lang = "fr";
+        saveState();
+        syncPreferencesUI();
+      });
+      document.getElementById("home-theme-light").addEventListener("click", () => {
+        prefs.theme = "light";
+        saveState();
+        syncPreferencesUI();
+      });
+      document.getElementById("home-theme-dark").addEventListener("click", () => {
+        prefs.theme = "dark";
+        saveState();
+        syncPreferencesUI();
+      });
+      document.getElementById("home-mode-hanzi").addEventListener("click", () => {
+        prefs.mode = "hanzi";
+        saveState();
+        syncPreferencesUI();
+      });
+      document.getElementById("home-mode-pinyin").addEventListener("click", () => {
+        prefs.mode = "pinyin";
+        saveState();
+        syncPreferencesUI();
+      });
+      document.getElementById("home-mode-trans").addEventListener("click", () => {
+        prefs.mode = "trans";
+        saveState();
+        syncPreferencesUI();
+      });
 
-      if (modeHanziBtn) {
-        modeHanziBtn.addEventListener("click", () => {
-          studyMode = "hanzi";
-          initDeck(false);
-        });
-      }
-      if (modePinyinBtn) {
-        modePinyinBtn.addEventListener("click", () => {
-          studyMode = "pinyin";
-          initDeck(false);
-        });
-      }
-      if (modeEnglishBtn) {
-        modeEnglishBtn.addEventListener("click", () => {
-          studyMode = "english";
-          initDeck(false);
-        });
-      }
+      // Home Kicked Import & Clear
+      document.getElementById("home-import-btn").addEventListener("click", () => {
+        const input = document.getElementById("home-import-input");
+        const count = parseAndImportKicked(input.value);
+        input.value = "";
+        showToast("Imported " + count + " kicked word(s).");
+      });
+      document.getElementById("home-clear-kicked-btn").addEventListener("click", () => {
+        kickedIds.clear();
+        saveState();
+        syncPreferencesUI();
+        showToast("Cleared all kicked words.");
+      });
 
-      const revealBtn = document.getElementById("reveal-btn");
-      const kickFrontBtn = document.getElementById("kick-front-btn");
-      const learningBtn = document.getElementById("learning-btn");
-      const masteredBtn = document.getElementById("mastered-btn");
-      const kickBackBtn = document.getElementById("kick-back-btn");
+      // Home Reset Shortcuts
+      document.getElementById("home-reset-shortcuts-btn").addEventListener("click", () => {
+        shortcuts = JSON.parse(JSON.stringify(DEFAULT_SHORTCUTS));
+        rebindingAction = null;
+        saveState();
+        syncPreferencesUI();
+        showToast("Shortcuts reset to defaults.");
+      });
 
-      if (revealBtn) revealBtn.addEventListener("click", flipCard);
-      if (kickFrontBtn) kickFrontBtn.addEventListener("click", handleKickCard);
-      if (learningBtn) learningBtn.addEventListener("click", handleStillLearning);
-      if (masteredBtn) masteredBtn.addEventListener("click", handleMastered);
-      if (kickBackBtn) kickBackBtn.addEventListener("click", handleKickCard);
+      // Home Open Library & Start Studying
+      document.getElementById("home-open-library-btn").addEventListener("click", () => openLibraryModal("all"));
+      document.getElementById("start-studying-btn").addEventListener("click", () => {
+        document.getElementById("home-view").classList.add("hidden");
+        document.getElementById("study-view").classList.remove("hidden");
+        buildStudyDeck();
+      });
 
-      const audioBtn = document.getElementById("audio-btn");
-      if (audioBtn) {
-        audioBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          if (studyQueue.length > 0) {
-            speakMandarin(studyQueue[0].hanzi, audioBtn);
-          }
-        });
-      }
-
-      const exampleAudioBtn = document.getElementById("example-audio-btn");
-      if (exampleAudioBtn) {
-        exampleAudioBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          if (studyQueue.length > 0) {
-            speakMandarin(studyQueue[0].exZh);
-          }
-        });
-      }
-
-      const resetSessionBtn = document.getElementById("reset-session-btn");
-      if (resetSessionBtn) {
-        resetSessionBtn.addEventListener("click", () => {
-          studyQueue = shuffleArray(studyQueue);
-          renderCurrentCard();
-          showToast("Remaining cards shuffled randomly");
-        });
-      }
-
-      const restartCompletedBtn = document.getElementById("restart-completed-btn");
-      if (restartCompletedBtn) {
-        restartCompletedBtn.addEventListener("click", () => {
-          const categoryWords = selectedCategory === "All Words"
-            ? HSK1_VOCABULARY
-            : HSK1_VOCABULARY.filter(w => w.category === selectedCategory);
-          categoryWords.forEach(w => masteredIds.delete(w.id));
-          initDeck(false);
-          showToast("Mastered words shuffled back in!");
-        });
-      }
-
-      const completeOpenLibBtn = document.getElementById("complete-open-lib-btn");
-      if (completeOpenLibBtn) {
-        completeOpenLibBtn.addEventListener("click", () => openLibrary("all"));
-      }
-
-      const openLibraryBtn = document.getElementById("open-library-btn");
-      const closeLibraryBtn = document.getElementById("close-library-btn");
-      const libraryModal = document.getElementById("library-modal");
-
-      if (openLibraryBtn) openLibraryBtn.addEventListener("click", () => openLibrary("all"));
-      if (closeLibraryBtn) closeLibraryBtn.addEventListener("click", closeLibrary);
-      if (libraryModal) {
-        libraryModal.addEventListener("click", (e) => {
-          if (e.target === libraryModal) closeLibrary();
-        });
-      }
-
-      const toggleImportExportBtn = document.getElementById("toggle-import-export-btn");
-      const importExportPanel = document.getElementById("import-export-panel");
-      if (toggleImportExportBtn && importExportPanel) {
-        toggleImportExportBtn.addEventListener("click", () => {
-          importExportPanel.classList.toggle("hidden");
-        });
-      }
-
-      const exportKickedBtn = document.getElementById("export-kicked-btn");
-      if (exportKickedBtn) exportKickedBtn.addEventListener("click", handleExportKicked);
-
-      const copyExportCodeBtn = document.getElementById("copy-export-code-btn");
-      if (copyExportCodeBtn) {
-        copyExportCodeBtn.addEventListener("click", () => {
-          const exportCodeOutput = document.getElementById("export-code-output");
-          if (!exportCodeOutput || !exportCodeOutput.value) return;
-          exportCodeOutput.select();
-          const copied = copyTextToClipboard(exportCodeOutput.value);
-          showToast(copied ? "Kicked code copied to clipboard!" : "Select and copy the code above.");
-        });
-      }
-
-      const importKickedBtn = document.getElementById("import-kicked-btn");
-      if (importKickedBtn) importKickedBtn.addEventListener("click", handleImportKicked);
-
-      const tabAllBtn = document.getElementById("tab-all");
-      const tabActiveBtn = document.getElementById("tab-active");
-      const tabMasteredBtn = document.getElementById("tab-mastered");
-      const tabKickedBtn = document.getElementById("tab-kicked");
-
-      if (tabAllBtn) tabAllBtn.addEventListener("click", () => { activeLibraryTab = "all"; renderLibrary(); });
-      if (tabActiveBtn) tabActiveBtn.addEventListener("click", () => { activeLibraryTab = "active"; renderLibrary(); });
-      if (tabMasteredBtn) tabMasteredBtn.addEventListener("click", () => { activeLibraryTab = "mastered"; renderLibrary(); });
-      if (tabKickedBtn) tabKickedBtn.addEventListener("click", () => { activeLibraryTab = "kicked"; renderLibrary(); });
-
-      const librarySearchInput = document.getElementById("library-search");
-      if (librarySearchInput) {
-        librarySearchInput.addEventListener("input", (e) => {
-          librarySearchQuery = e.target.value;
-          renderLibrary();
-        });
-      }
-
-      document.addEventListener("keydown", (e) => {
-        const libModal = document.getElementById("library-modal");
-        if (e.key === "Escape" && libModal && !libModal.classList.contains("hidden")) {
-          closeLibrary();
-          return;
-        }
-        if (libModal && !libModal.classList.contains("hidden")) return;
-        if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
-
-        if (e.code === "Space") {
-          e.preventDefault();
-          flipCard();
-        } else if (e.key === "1" && isFlipped) {
-          e.preventDefault();
-          handleStillLearning();
-        } else if (e.key === "2" && isFlipped) {
-          e.preventDefault();
-          handleMastered();
-        } else if (e.key.toLowerCase() === "x" || e.key === "Delete") {
-          e.preventDefault();
-          handleKickCard();
-        } else if (e.key.toLowerCase() === "a") {
-          e.preventDefault();
-          if (studyQueue.length > 0) {
-            speakMandarin(studyQueue[0].hanzi, isFlipped ? audioBtn : null);
+      // Study Header Buttons
+      document.getElementById("back-home-btn").addEventListener("click", () => {
+        document.getElementById("study-view").classList.add("hidden");
+        document.getElementById("home-view").classList.remove("hidden");
+        syncPreferencesUI();
+      });
+      document.getElementById("study-theme-btn").addEventListener("click", () => {
+        prefs.theme = prefs.theme === "light" ? "dark" : "light";
+        saveState();
+        syncPreferencesUI();
+      });
+      document.getElementById("study-lang-btn").addEventListener("click", () => {
+        prefs.lang = prefs.lang === "en" ? "fr" : "en";
+        saveState();
+        syncPreferencesUI();
+        if (studyQueue.length > 0) {
+          const w = studyQueue[0];
+          document.getElementById("back-translation").textContent = prefs.lang === "fr" ? w.fr : w.en;
+          document.getElementById("back-ex-trans").textContent = prefs.lang === "fr" ? w.exampleFr : w.exampleEn;
+          if (prefs.mode === "trans") {
+            const box = document.getElementById("front-prompt-box");
+            if (box.firstChild) box.firstChild.textContent = prefs.lang === "fr" ? w.fr : w.en;
           }
         }
       });
+      document.getElementById("open-library-btn").addEventListener("click", () => openLibraryModal("all"));
+      document.getElementById("open-settings-btn").addEventListener("click", () => {
+        document.getElementById("settings-modal").classList.remove("hidden");
+        renderShortcutEditors();
+      });
+      document.getElementById("reset-deck-btn").addEventListener("click", () => {
+        buildStudyDeck();
+        showToast("Deck shuffled!");
+      });
 
-      // Initialize Deck on Load
-      initDeck(true);
+      // Flashcard & Action Controls
+      document.getElementById("flashcard-container").addEventListener("click", flipCard);
+      document.getElementById("reveal-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        flipCard();
+      });
+      document.getElementById("kick-front-top-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        handleKickCurrent();
+      });
+      document.getElementById("kick-front-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        handleKickCurrent();
+      });
+      document.getElementById("learning-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        handleStillLearning();
+      });
+      document.getElementById("mastered-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        handleMastered();
+      });
+      document.getElementById("kick-back-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        handleKickCurrent();
+      });
+      document.getElementById("audio-word-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (studyQueue.length > 0) speakMandarin(studyQueue[0].hanzi);
+      });
+      document.getElementById("audio-ex-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (studyQueue.length > 0) speakMandarin(studyQueue[0].exampleHanzi);
+      });
+
+      // Settings Modal Controls
+      document.getElementById("close-settings-btn").addEventListener("click", () => {
+        rebindingAction = null;
+        document.getElementById("settings-modal").classList.add("hidden");
+      });
+      document.getElementById("settings-done-btn").addEventListener("click", () => {
+        rebindingAction = null;
+        document.getElementById("settings-modal").classList.add("hidden");
+      });
+      document.getElementById("settings-reset-btn").addEventListener("click", () => {
+        shortcuts = JSON.parse(JSON.stringify(DEFAULT_SHORTCUTS));
+        rebindingAction = null;
+        saveState();
+        syncPreferencesUI();
+        showToast("Shortcuts reset to defaults.");
+      });
+
+      // Library Modal Controls
+      document.getElementById("close-library-btn").addEventListener("click", () => {
+        document.getElementById("library-modal").classList.add("hidden");
+        if (!document.getElementById("study-view").classList.contains("hidden")) {
+          // Remove any newly kicked words from active studyQueue
+          studyQueue = studyQueue.filter(w => !kickedIds.has(w.id));
+          renderCurrentCard();
+        }
+      });
+      document.querySelectorAll(".lib-tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          activeLibTab = btn.getAttribute("data-tab");
+          renderLibraryModal();
+        });
+      });
+      document.getElementById("lib-search-input").addEventListener("input", renderLibraryModal);
+      document.getElementById("lib-study-all-mastered-btn").addEventListener("click", () => {
+        masteredIds.clear();
+        saveState();
+        renderLibraryModal();
+        updateStatsUI();
+        showToast("All mastered words returned to active pool!");
+      });
+      document.getElementById("io-copy-btn").addEventListener("click", () => {
+        const box = document.getElementById("io-export-box");
+        box.select();
+        document.execCommand("copy");
+        showToast("Copied kicked list to clipboard!");
+      });
+      document.getElementById("io-apply-btn").addEventListener("click", () => {
+        const box = document.getElementById("io-import-box");
+        const count = parseAndImportKicked(box.value);
+        box.value = "";
+        renderLibraryModal();
+        showToast("Imported " + count + " kicked word(s).");
+      });
+
+      // Global Keyboard Shortcut Listener
+      document.addEventListener("keydown", (e) => {
+        // Handle Shortcut Rebinding
+        if (rebindingAction) {
+          e.preventDefault();
+          const newCode = e.code;
+          const newLabel = formatKeyLabel(e);
+          // Swap if already assigned to another action
+          Object.keys(shortcuts).forEach(act => {
+            if (act !== rebindingAction && shortcuts[act].code === newCode) {
+              shortcuts[act] = { ...shortcuts[rebindingAction] };
+            }
+          });
+          shortcuts[rebindingAction] = { code: newCode, label: newLabel };
+          rebindingAction = null;
+          saveState();
+          syncPreferencesUI();
+          return;
+        }
+
+        // Ignore keystrokes when typing in inputs/textareas or modals are open
+        const tag = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : "";
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
+        if (!document.getElementById("settings-modal").classList.contains("hidden")) return;
+        if (!document.getElementById("library-modal").classList.contains("hidden")) return;
+        if (document.getElementById("study-view").classList.contains("hidden")) return;
+
+        if (e.code === shortcuts.flip.code) {
+          e.preventDefault();
+          flipCard();
+        } else if (e.code === shortcuts.kick.code) {
+          e.preventDefault();
+          handleKickCurrent();
+        } else if (e.code === shortcuts.audio.code) {
+          e.preventDefault();
+          if (studyQueue.length > 0) speakMandarin(studyQueue[0].hanzi);
+        } else if (isFlipped && e.code === shortcuts.learning.code) {
+          e.preventDefault();
+          handleStillLearning();
+        } else if (isFlipped && e.code === shortcuts.mastered.code) {
+          e.preventDefault();
+          handleMastered();
+        }
+      });
     });
   </script>
 </body>
